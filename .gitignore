@@ -13,7 +13,8 @@ ENV/
 results/
 *.csv
 *.xlsx
-*.xls
+# Allow example .xls files in VLPIM_Web_services
+!VLPIM_Web_services/*.xls
 
 # IDE
 .vscode/
