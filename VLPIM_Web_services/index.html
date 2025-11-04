@@ -765,7 +765,12 @@
                             <label for="csvFile" class="file-label">
                                 <i class="fas fa-file-upload"></i> NetMHCIIpan output file
                             </label>
-                            <input type="file" id="csvFile" class="file-input" accept=".csv,.txt" @change="handleWy2Csv">
+                            <input type="file" id="csvFile" class="file-input" accept=".csv,.txt,.xls,.xlsx" @change="handleWy2Csv">
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                Supports NetMHCIIpan output formats: standard text output (.txt) or website format (.xls/.xlsx)
+                            </small>
                         </div>
                         <div v-if="isCsvLoading" class="mt-2"><span class="badge badge-info">Loading example...</span></div>
                         
