@@ -45,14 +45,16 @@ integration/
 
 # Python source code (not needed for GitHub Pages)
 src/
-scripts/
 tests/
 config/
 examples/
 docs/
+# Allow scripts/ directory for user-downloadable tools
+!scripts/
 
-# Python files
+# Python files (except tools in scripts/)
 *.py
+!scripts/*.py
 *.pyc
 *.pyo
 *.pyd
