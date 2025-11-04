@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Circular Contact Map - Toolboxes</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    body { background: #f7f9fc; }
+    .container-narrow { max-width: 960px; }
+    .card { border: 1px solid #e7eaf0; box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
+    code { background:#f4f4f4; padding:2px 6px; border-radius:3px; }
+  </style>
+  <script defer src="https://buttons.github.io/buttons.js"></script>
+  <script>
+    function downloadScript() {
+      window.location.href = '../scripts/circular_ribbon_contact_map.py';
+    }
+  </script>
+  <meta name="description" content="Circular ribbon contact map generator for nanobody–antigen interface analysis." />
+</head>
+<body>
+  <div class="container container-narrow py-4">
+    <div class="text-center mb-4">
+      <h1 class="fw-bold"><i class="fas fa-circle-notch"></i> Circular Contact Map</h1>
+      <p class="text-muted m-0">Nanobody–antigen interface analysis with circular ribbon diagrams</p>
+      <a class="github-button" href="https://github.com/RuijinHospitalVNAR/Toolboxes" data-size="large" data-show-count="true" aria-label="Star">Star</a>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">What is this tool?</h5>
+        <p class="card-text">
+          This tool helps you generate a <strong>circular ribbon contact map</strong> to visualize
+          residue–residue contacts between two protein chains (e.g., nanobody and antigen).
+          It supports two workflows:
+        </p>
+        <ol>
+          <li><strong>From mmCIF</strong>: extract sequences and contacts for two chains, then plot.</li>
+          <li><strong>From edges.csv</strong>: directly plot from a Cytoscape-like <code>edges.csv</code> (source,target[,distance]).</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Download</h5>
+        <p class="card-text">Run locally with Python. Requires <code>pandas</code>, <code>holoviews[bokeh]</code>, <code>biopython</code>.</p>
+        <button class="btn btn-primary" onclick="downloadScript()"><i class="fas fa-download"></i> Download Python script</button>
+        <a class="btn btn-outline-secondary ms-2" target="_blank" href="../scripts/circular_ribbon_contact_map.py"><i class="fas fa-file-code"></i> View source</a>
+        <p class="small text-muted mt-2">File: <code>scripts/circular_ribbon_contact_map.py</code></p>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Quick start</h5>
+        <p class="mb-1 fw-bold">Install dependencies</p>
+        <pre class="mb-3"><code>pip install pandas holoviews bokeh biopython matplotlib</code></pre>
+        <p class="mb-1 fw-bold">A) From mmCIF (recommended)</p>
+        <pre class="mb-3"><code>python scripts/circular_ribbon_contact_map.py --cif complex.cif --chain1 H --chain2 L --cutoff 5.0 --output H_L_contact_map.html</code></pre>
+        <ul>
+          <li>Outputs sequences (FASTA), contact pairs (CSV), and an HTML plot (interactive).</li>
+          <li>Use <code>--output &lt;file.png&gt;</code> to render PNG (requires bokeh + selenium + pillow).</li>
+        </ul>
+        <p class="mb-1 fw-bold">B) From edges.csv</p>
+        <pre class="mb-0"><code># edges.csv columns: source,target[,distance]
+python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.html</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Tips</h5>
+        <ul class="mb-0">
+          <li>Residue node naming format: <code>Chain_RES3_Num</code> (e.g., <code>A_ARG_100</code>).</li>
+          <li>Distance (optional) can control edge width; closer contacts draw thicker ribbons.</li>
+          <li>Recommended distance cutoff for contacts: 4.5–5.0 Å.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="text-center text-muted mt-4">
+      <small>&copy; 2025 Toolboxes. MIT License.</small>
+    </div>
+  </div>
+</body>
+</html>
+
+
