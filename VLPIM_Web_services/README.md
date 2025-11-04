@@ -22,7 +22,7 @@ Simply open `index.html` in your web browser or visit the [live version](https:/
 - Filter by binding strength (Strong/Weak binding)
 
 ### 2. Immunogenicity Analysis
-- Compute S^im scores from NetMHCIIpan results
+- Compute S<sup>im</sup> scores from NetMHCIIpan results
 - Enhance or Reduce modes for immunogenicity modulation
 - Export results to CSV
 
@@ -55,7 +55,7 @@ The following example files are included:
 2. **Immunogenicity Analysis**:
    - Upload NetMHCIIpan output file
    - Select mode (Enhance/Reduce)
-   - Click "Compute S^im scores"
+   - Click "Compute S<sup>im</sup> scores"
 
 3. **Structural Superposition**:
    - Upload reference and predicted structures
