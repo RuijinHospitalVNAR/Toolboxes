@@ -19,6 +19,8 @@
     }
   </script>
   <meta name="description" content="Circular ribbon contact map generator for nanobody–antigen interface analysis." />
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-chord@3"></script>
 </head>
 <body>
   <div class="container container-narrow py-4">
@@ -70,7 +72,7 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
       </div>
     </div>
 
-    <div class="card">
+    <div class="card mb-3">
       <div class="card-body">
         <h5 class="card-title">Tips</h5>
         <ul class="mb-0">
@@ -81,10 +83,224 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
       </div>
     </div>
 
+    <!-- Web App: upload & draw chord -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Web app (no backend) — Upload and draw</h5>
+        <p class="text-muted">Upload one of the following: <code>edges.csv</code>, <code>edges.json</code>, or <code>.cif</code>. For CIF, choose two chains and cutoff.</p>
+        <div class="row g-3 align-items-end">
+          <div class="col-md-6">
+            <label class="form-label">Upload file (csv/json/cif)</label>
+            <input id="fileInput" type="file" class="form-control" accept=".csv,.json,.cif" />
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Chain 1</label>
+            <select id="chain1" class="form-select"></select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Chain 2</label>
+            <select id="chain2" class="form-select"></select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Cutoff (Å)</label>
+            <input id="cutoff" type="number" class="form-control" value="5.0" min="3.0" max="10.0" step="0.1" />
+          </div>
+          <div class="col-md-12">
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="checkbox" value="" id="useWeighting" />
+              <label class="form-check-label" for="useWeighting">
+                Use distance weighting (closer contacts → thicker ribbons)
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <button id="btnParse" class="btn btn-primary"><i class="fas fa-play"></i> Parse & Draw</button>
+          <small id="status" class="text-muted ms-2"></small>
+        </div>
+        <div class="mt-4" id="vizContainer">
+          <svg id="chordSvg" width="760" height="760"></svg>
+          <div class="mt-2 small text-muted" id="legendBox">
+            <i class="fas fa-info-circle"></i> Legend: node colors are categorical; ribbon thickness represents
+            the aggregated contact weight between residue nodes. When "Use distance weighting" is enabled,
+            closer contacts contribute more weight; otherwise each contact contributes equally.
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="text-center text-muted mt-4">
       <small>&copy; 2025 Toolboxes. MIT License.</small>
     </div>
   </div>
+  <script>
+    // Utilities
+    function setStatus(msg) { document.getElementById('status').textContent = msg; }
+    function parseCSV(text) {
+      const lines = text.replace(/\r\n/g,'\n').split('\n').filter(x=>x.trim().length>0);
+      const header = lines[0].split(',').map(s=>s.trim());
+      const idxS = header.findIndex(h=>/^source$/i.test(h));
+      const idxT = header.findIndex(h=>/^target$/i.test(h));
+      const idxD = header.findIndex(h=>/^distance$/i.test(h));
+      if (idxS<0 || idxT<0) throw new Error('CSV must contain source,target columns');
+      const edges=[];
+      for (let i=1;i<lines.length;i++){
+        const parts = lines[i].split(',');
+        const s = (parts[idxS]||'').trim();
+        const t = (parts[idxT]||'').trim();
+        if (!s||!t) continue;
+        const d = idxD>=0 ? Number(parts[idxD]) : undefined;
+        edges.push({source:s,target:t,distance:(Number.isFinite(d)?d:undefined)});
+      }
+      return edges;
+    }
+    function parseJSON(text){
+      const data = JSON.parse(text);
+      if (Array.isArray(data)) return data; // assume array of edges
+      if (Array.isArray(data.edges)) return data.edges;
+      throw new Error('JSON must be an array of edges or {edges:[...]}.');
+    }
+    // Simple CIF parser: read atom_site loop, collect CA rows per chain
+    function parseCIF_CA(text){
+      const lines = text.split(/\r?\n/);
+      let inLoop=false; const headerCols={}; const rows=[];
+      for(const raw of lines){
+        const line = raw.trim(); if(!line) continue;
+        if (line.startsWith('loop_')) { inLoop=false; for(const k in headerCols) delete headerCols[k]; continue; }
+        if (line.startsWith('_atom_site.')) { inLoop=true; const name=line.replace('_atom_site.','').trim(); headerCols[name]=Object.keys(headerCols).length; continue; }
+        if (inLoop && !line.startsWith('#')){
+          const parts=line.split(/\s+/);
+          const li=headerCols['label_atom_id'], ci=headerCols['label_asym_id'], ri=headerCols['label_seq_id'], xi=headerCols['Cartn_x'], yi=headerCols['Cartn_y'], zi=headerCols['Cartn_z'], rn=headerCols['label_comp_id'];
+          if([li,ci,ri,xi,yi,zi,rn].some(v=>v==null)) continue;
+          if (parts.length<=Math.max(li,ci,ri,xi,yi,zi,rn)) continue;
+          if (parts[li]==='CA'){
+            const rec={
+              chain: parts[ci],
+              resnum: Number(parts[ri]),
+              resname: parts[rn],
+              x: Number(parts[xi]), y: Number(parts[yi]), z: Number(parts[zi]),
+            };
+            if (Number.isFinite(rec.x) && Number.isFinite(rec.y) && Number.isFinite(rec.z)) rows.push(rec);
+          }
+        }
+      }
+      return rows; // [{chain,resnum,resname,x,y,z}]
+    }
+    function calcContactsFromCA(caRows, chain1, chain2, cutoff){
+      const a = caRows.filter(r=>r.chain===chain1);
+      const b = caRows.filter(r=>r.chain===chain2);
+      const cutoff2 = cutoff*cutoff;
+      const edges=[];
+      for(const r1 of a){
+        for(const r2 of b){
+          const dx=r1.x-r2.x, dy=r1.y-r2.y, dz=r1.z-r2.z; const d2=dx*dx+dy*dy+dz*dz;
+          if (d2<=cutoff2){
+            const s=`${chain1}_${r1.resname}_${r1.resnum}`;
+            const t=`${chain2}_${r2.resname}_${r2.resnum}`;
+            edges.push({source:s,target:t,distance:Math.sqrt(d2)});
+          }
+        }
+      }
+      return edges;
+    }
+    // Chord rendering via d3
+    function renderChord(edges){
+      const svg = d3.select('#chordSvg');
+      svg.selectAll('*').remove();
+      const width=760, height=760, innerRadius= Math.min(width, height)*0.5 - 80, outerRadius=innerRadius+10;
+      const nodes = Array.from(new Set(edges.flatMap(e=>[e.source,e.target])));
+      const index = new Map(nodes.map((n,i)=>[n,i]));
+      const N = nodes.length; const matrix = Array.from({length:N},()=>Array(N).fill(0));
+      // Distance weighting setup
+      const useW = document.getElementById('useWeighting').checked;
+      const dvals = edges.map(e=>e.distance).filter(d=>Number.isFinite(d));
+      const dmin = dvals.length? Math.min(...dvals): 0;
+      const dmax = dvals.length? Math.max(...dvals): 1;
+      function weight(e){
+        if (!useW || !Number.isFinite(e.distance)) return 1.0;
+        if (dmax<=dmin) return 1.0;
+        // Map distance to [0.5, 5.0] (closer → thicker)
+        const t = (e.distance - dmin) / (dmax - dmin);
+        return 5.0 - 4.5*t; // 5.0 (close) .. 0.5 (far)
+      }
+      for(const e of edges){
+        const i=index.get(e.source), j=index.get(e.target);
+        if (i==null || j==null) continue;
+        const w = weight(e);
+        matrix[i][j] += w; matrix[j][i] += w;
+      }
+      const color = d3.scaleOrdinal(d3.schemeCategory10);
+      const chord = d3.chord().padAngle(0.02).sortSubgroups(d3.descending)(matrix);
+      const arc = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius);
+      const ribbon = d3.ribbon().radius(innerRadius);
+      const g = svg.attr('viewBox', [-width/2, -height/2, width, height]).append('g');
+
+      // Groups (nodes)
+      const group = g.append('g')
+        .selectAll('g')
+        .data(chord.groups)
+        .join('g');
+      group.append('path')
+        .attr('d', arc)
+        .attr('fill', d=>color(d.index))
+        .attr('stroke', '#fff');
+      group.append('text')
+        .each(d=>{d.angle=(d.startAngle+d.endAngle)/2;})
+        .attr('dy','.35em')
+        .attr('transform', d=>`rotate(${d.angle*180/Math.PI-90}) translate(${outerRadius+6}) ${d.angle>Math.PI?"rotate(180)":''}`)
+        .attr('text-anchor', d=>d.angle>Math.PI?'end':null)
+        .style('font-size','9px')
+        .text(d=>nodes[d.index]);
+
+      // Ribbons (edges)
+      g.append('g')
+        .attr('fill-opacity',0.85)
+        .selectAll('path')
+        .data(chord)
+        .join('path')
+        .attr('d', ribbon)
+        .attr('fill', d=>color(d.target.index))
+        .attr('stroke', '#fff');
+    }
+
+    // Wire UI
+    const input = document.getElementById('fileInput');
+    const sel1 = document.getElementById('chain1');
+    const sel2 = document.getElementById('chain2');
+    const cutoffEl = document.getElementById('cutoff');
+    let cachedCIF = null; // store CA rows after parsing
+
+    input.addEventListener('change', async (e)=>{
+      setStatus(''); sel1.innerHTML=''; sel2.innerHTML=''; cachedCIF=null;
+      const file=e.target.files && e.target.files[0]; if(!file) return;
+      const name=file.name.toLowerCase(); const buf=await file.text();
+      try{
+        if (name.endsWith('.csv')){
+          const edges=parseCSV(buf); renderChord(edges); setStatus(`Parsed ${edges.length} edges from CSV.`);
+        } else if (name.endsWith('.json')){
+          const edges=parseJSON(buf); renderChord(edges); setStatus(`Parsed ${edges.length} edges from JSON.`);
+        } else if (name.endsWith('.cif')){
+          const rows=parseCIF_CA(buf); cachedCIF=rows;
+          const chains = Array.from(new Set(rows.map(r=>r.chain)));
+          chains.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; sel1.appendChild(o.cloneNode(true)); sel2.appendChild(o); });
+          setStatus(`Parsed CIF: detected chains [${chains.join(', ')}]. Choose chains and click Parse & Draw.`);
+        } else {
+          setStatus('Unsupported file type.');
+        }
+      }catch(err){ setStatus('Parse error: '+err.message); }
+    });
+    document.getElementById('btnParse').addEventListener('click', ()=>{
+      const file=input.files && input.files[0]; if(!file){ setStatus('Please upload a file first.'); return; }
+      const name=file.name.toLowerCase();
+      if (name.endsWith('.cif')){
+        if(!cachedCIF){ setStatus('CIF not parsed.'); return; }
+        const c1=sel1.value, c2=sel2.value; const cutoff=Number(cutoffEl.value)||5.0;
+        if(!c1||!c2||c1===c2){ setStatus('Please choose two different chains.'); return; }
+        const edges=calcContactsFromCA(cachedCIF, c1, c2, cutoff);
+        renderChord(edges); setStatus(`Computed ${edges.length} contacts @ cutoff ${cutoff} Å.`);
+      }
+    });
+  </script>
 </body>
 </html>
 
