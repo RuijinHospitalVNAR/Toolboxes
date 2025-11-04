@@ -2996,7 +2996,49 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                     });
                 },
                 // wy2 (run_ic50_sum)
-                handleWy2Csv(evt){ const file=evt.target.files&&evt.target.files[0]; if(!file) return; this.wy2CsvName=file.name; const reader=new FileReader(); reader.onload=(e)=>{ this.wy2CsvText=(e.target.result||'').toString(); }; reader.readAsText(file,'utf-8'); },
+                handleWy2Csv(evt){ 
+                    try {
+                        const file = evt.target.files && evt.target.files[0];
+                        if (!file) return;
+                        this.wy2CsvName = file.name;
+                        this.errorMessage = '';
+                        
+                        const fileName = file.name.toLowerCase();
+                        if (fileName.endsWith('.txt') || fileName.endsWith('.csv')) {
+                            // Handle text file
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                this.wy2CsvText = (e.target.result || '').toString();
+                            };
+                            reader.readAsText(file, 'utf-8');
+                        } else if (fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) {
+                            // Handle Excel file
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                try {
+                                    const data = new Uint8Array(e.target.result);
+                                    const workbook = XLSX.read(data, { type: 'array' });
+                                    
+                                    // Convert Excel to text format (tab-separated)
+                                    const textContent = this.convertExcelToNetMHCIIFormat(workbook);
+                                    if (textContent) {
+                                        this.wy2CsvText = textContent;
+                                    } else {
+                                        this.errorMessage = 'Failed to parse Excel file. Please check the file format.';
+                                    }
+                                } catch (excelError) {
+                                    console.error('Excel parsing error:', excelError);
+                                    this.errorMessage = 'Failed to parse Excel file: ' + (excelError.message || 'Unknown error');
+                                }
+                            };
+                            reader.readAsArrayBuffer(file);
+                        } else {
+                            this.errorMessage = 'Unsupported file format. Please use .txt, .csv, .xls, or .xlsx files.';
+                        }
+                    } catch (e) {
+                        this.errorMessage = e.message || 'File read failed';
+                    }
+                },
                 processWy2(){ try{ 
                     // start progress
                     this.wy2Processing.active = true; this.wy2Processing.value = 10;
