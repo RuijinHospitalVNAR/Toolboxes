@@ -37,6 +37,10 @@ Thumbs.db
 fold_pmd2_01/
 *.cif
 *.json
+# Allow static images in VLPIM_Web_services
+!VLPIM_Web_services/static/*.png
+!VLPIM_Web_services/static/*.jpg
+!VLPIM_Web_services/static/*.jpeg
 
 # Backend (not needed for static pages)
 backend/
