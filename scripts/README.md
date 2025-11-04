@@ -2,6 +2,17 @@
 
 This directory contains standalone Python scripts that can be used locally for VLPIM analysis.
 
+## Download and Installation
+
+Download the scripts from the repository:
+```bash
+git clone https://github.com/RuijinHospitalVNAR/Toolboxes.git
+cd Toolboxes/scripts
+```
+
+Or download individual files directly from:
+https://github.com/RuijinHospitalVNAR/Toolboxes/tree/main/scripts
+
 ## Available Scripts
 
 ### 1. `run_rmsd.py` - RMSD Structure Comparison
