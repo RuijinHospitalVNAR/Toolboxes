@@ -1054,6 +1054,11 @@
                         <i class="fas fa-quote-left"></i> Citation
                     </a>
                 </div>
+                <div class="mt-3">
+                    <small class="text-white-50">
+                        <i class="fas fa-eye"></i> Page views: <span id="pageViews">{{ pageViews }}</span>
+                    </small>
+                </div>
                 <p class="mt-4"><small>&copy; 2025 VLPIM. MIT License.</small></p>
             </div>
         </footer>
@@ -1210,6 +1215,44 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                 }
             },
             methods: {
+                initPageViews() {
+                    // Use localStorage to track page views (client-side only)
+                    // For server-side tracking, you would need a backend service
+                    const storageKey = 'vlpim_page_views';
+                    const lastVisitKey = 'vlpim_last_visit';
+                    const today = new Date().toDateString();
+                    
+                    try {
+                        // Get stored views
+                        let views = parseInt(localStorage.getItem(storageKey) || '0', 10);
+                        const lastVisit = localStorage.getItem(lastVisitKey);
+                        
+                        // Increment if this is a new visit today (not the same session)
+                        if (lastVisit !== today) {
+                            views += 1;
+                            localStorage.setItem(storageKey, views.toString());
+                            localStorage.setItem(lastVisitKey, today);
+                        }
+                        
+                        this.pageViews = views;
+                        
+                        // Update display
+                        this.$nextTick(() => {
+                            this.updatePageViewsDisplay();
+                        });
+                    } catch (e) {
+                        console.warn('Page view counter initialization failed:', e);
+                        this.pageViews = 0;
+                    }
+                },
+                updatePageViewsDisplay() {
+                    // Format the number with commas for better readability
+                    const formatted = this.pageViews.toLocaleString();
+                    const element = document.getElementById('pageViews');
+                    if (element) {
+                        element.textContent = formatted;
+                    }
+                },
                 getEmbeddedText(id) {
                     const el = document.getElementById(id);
                     return el ? (el.textContent || '').trim() : '';
@@ -3036,6 +3079,9 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                 }
             },
             mounted() {
+                // Initialize page view counter
+                this.initPageViews();
+                
                 window.addEventListener('scroll', () => {
                     const sections = ['epitope', 'analyze', 'structure', 'docs', 'cite'];
                     for (const sec of sections) {
