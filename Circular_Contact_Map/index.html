@@ -116,14 +116,27 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
         </div>
         <div class="mt-3">
           <button id="btnParse" class="btn btn-primary"><i class="fas fa-play"></i> Parse & Draw</button>
+          <button id="btnExport" class="btn btn-outline-success ms-2" style="display:none;"><i class="fas fa-download"></i> Export Sequences & Contacts</button>
           <small id="status" class="text-muted ms-2"></small>
         </div>
         <div class="mt-4" id="vizContainer">
           <svg id="chordSvg" width="760" height="760"></svg>
-          <div class="mt-2 small text-muted" id="legendBox">
-            <i class="fas fa-info-circle"></i> Legend: node colors are categorical; ribbon thickness represents
-            the aggregated contact weight between residue nodes. When "Use distance weighting" is enabled,
-            closer contacts contribute more weight; otherwise each contact contributes equally.
+          <div class="mt-3" id="legendBox">
+            <div class="small text-muted mb-2"><i class="fas fa-info-circle"></i> <strong>Legend:</strong></div>
+            <div class="small">
+              <div class="mb-1"><strong>Node colors:</strong> Based on amino acid properties</div>
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <span><span style="display:inline-block;width:12px;height:12px;background:#FF7744;border:1px solid #ccc;"></span> Hydrophobic (ALA, VAL, LEU, ILE, MET, PHE, TRP, PRO, GLY)</span>
+                <span><span style="display:inline-block;width:12px;height:12px;background:#87CEFA;border:1px solid #ccc;"></span> Polar (SER, THR, TYR, ASN, GLN)</span>
+                <span><span style="display:inline-block;width:12px;height:12px;background:#FF0000;border:1px solid #ccc;"></span> Acidic (ASP, GLU)</span>
+                <span><span style="display:inline-block;width:12px;height:12px;background:#B565A7;border:1px solid #ccc;"></span> Basic (LYS, ARG, HIS)</span>
+                <span><span style="display:inline-block;width:12px;height:12px;background:#000000;border:1px solid #ccc;"></span> Cysteine (CYS)</span>
+                <span><span style="display:inline-block;width:12px;height:12px;background:#FFA500;border:1px solid #ccc;"></span> Chain 1 (unconnected)</span>
+                <span><span style="display:inline-block;width:12px;height:12px;background:#20B2AA;border:1px solid #ccc;"></span> Chain 2 (unconnected)</span>
+              </div>
+              <div class="mb-1"><strong>Ribbon colors:</strong> Based on source node amino acid properties</div>
+              <div class="mb-1"><strong>Ribbon thickness:</strong> When "Use distance weighting" is enabled, closer contacts contribute more weight; otherwise each contact contributes equally.</div>
+            </div>
           </div>
         </div>
       </div>
@@ -134,6 +147,129 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
     </div>
   </div>
   <script>
+    // Amino acid property classification (matching Python version)
+    const hydrophobic = new Set(['ALA', 'VAL', 'LEU', 'ILE', 'MET', 'PHE', 'TRP', 'PRO', 'GLY']);
+    const polar = new Set(['SER', 'THR', 'TYR', 'ASN', 'GLN']);
+    const acidic = new Set(['ASP', 'GLU']);
+    const basic = new Set(['LYS', 'ARG', 'HIS']);
+    
+    // Color mapping (matching Python version with alpha 0.75)
+    function getAAColor(resname) {
+      const res = resname.toUpperCase();
+      if (res === 'CYS') return '#000000'; // black
+      if (hydrophobic.has(res)) return '#FF7744'; // orange-red
+      if (polar.has(res)) return '#87CEFA'; // light blue
+      if (acidic.has(res)) return '#FF0000'; // red
+      if (basic.has(res)) return '#B565A7'; // purple
+      return '#AAAAAA'; // default gray
+    }
+    
+    // Extract residue name from node label (format: Chain_RES3_Num)
+    function extractResname(nodeLabel) {
+      const parts = nodeLabel.split('_');
+      if (parts.length >= 2) return parts[1];
+      return null;
+    }
+    
+    // Extract chain ID from node label
+    function extractChain(nodeLabel) {
+      const parts = nodeLabel.split('_');
+      if (parts.length >= 1) return parts[0];
+      return null;
+    }
+    
+    // Get node color based on amino acid property or chain (for unconnected nodes)
+    function getNodeColor(nodeLabel, connectedNodes, chain1, chain2) {
+      if (connectedNodes.has(nodeLabel)) {
+        const resname = extractResname(nodeLabel);
+        if (resname) return getAAColor(resname);
+      }
+      // Unconnected nodes: color by chain
+      const chain = extractChain(nodeLabel);
+      if (chain === chain1) return '#FFA500'; // orange for chain1
+      if (chain === chain2) return '#20B2AA'; // teal for chain2
+      return 'rgba(0,0,0,0.4)'; // default gray
+    }
+    
+    // Get edge color based on source node amino acid property
+    function getEdgeColor(sourceNode) {
+      const resname = extractResname(sourceNode);
+      if (resname) return getAAColor(resname);
+      return '#AAAAAA'; // default gray
+    }
+    
+    // Extract sequence from CA rows
+    function extractSequence(caRows, chainId) {
+      const chainResidues = caRows.filter(r => r.chain === chainId);
+      // Sort by residue number
+      chainResidues.sort((a, b) => a.resnum - b.resnum);
+      // Get unique residues (in case of duplicates)
+      const seen = new Set();
+      const unique = [];
+      for (const r of chainResidues) {
+        const key = `${r.resnum}_${r.resname}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          unique.push(r);
+        }
+      }
+      return unique.map(r => r.resname);
+    }
+    
+    // Three-letter to one-letter amino acid code
+    const aa3to1 = {
+      'ALA': 'A', 'CYS': 'C', 'ASP': 'D', 'GLU': 'E', 'PHE': 'F',
+      'GLY': 'G', 'HIS': 'H', 'ILE': 'I', 'LYS': 'K', 'LEU': 'L',
+      'MET': 'M', 'ASN': 'N', 'PRO': 'P', 'GLN': 'Q', 'ARG': 'R',
+      'SER': 'S', 'THR': 'T', 'VAL': 'V', 'TRP': 'W', 'TYR': 'Y'
+    };
+    
+    function resnameToSeq(resname) {
+      return aa3to1[resname.toUpperCase()] || 'X';
+    }
+    
+    // Identify interfaces (continuous residue segments)
+    function identifyInterfaces(edges) {
+      const contactNodes = new Set(edges.flatMap(e => [e.source, e.target]));
+      const chainResnum = {};
+      
+      for (const node of contactNodes) {
+        const parts = node.split('_');
+        if (parts.length === 3) {
+          const chain = parts[0];
+          const num = parseInt(parts[2]);
+          if (!isNaN(num)) {
+            if (!chainResnum[chain]) chainResnum[chain] = [];
+            chainResnum[chain].push(num);
+          }
+        }
+      }
+      
+      const interfaces = [];
+      for (const [chain, nums] of Object.entries(chainResnum)) {
+        const sorted = [...new Set(nums)].sort((a, b) => a - b);
+        let current = [];
+        let lastNum = null;
+        
+        for (const num of sorted) {
+          if (lastNum !== null && num === lastNum + 1) {
+            current.push(num);
+          } else {
+            if (current.length >= 2) {
+              interfaces.push({ chain, residues: [...current] });
+            }
+            current = [num];
+          }
+          lastNum = num;
+        }
+        if (current.length >= 2) {
+          interfaces.push({ chain, residues: [...current] });
+        }
+      }
+      
+      return interfaces;
+    }
+    
     // Utilities
     function setStatus(msg) { document.getElementById('status').textContent = msg; }
     function parseCSV(text) {
@@ -203,14 +339,24 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
       }
       return edges;
     }
-    // Chord rendering via d3
-    function renderChord(edges){
+    // Chord rendering via d3 (with amino acid-based coloring)
+    let currentEdges = null;
+    let currentChain1 = null;
+    let currentChain2 = null;
+    
+    function renderChord(edges, chain1, chain2){
+      currentEdges = edges;
+      currentChain1 = chain1;
+      currentChain2 = chain2;
+      
       const svg = d3.select('#chordSvg');
       svg.selectAll('*').remove();
       const width=760, height=760, innerRadius= Math.min(width, height)*0.5 - 80, outerRadius=innerRadius+10;
       const nodes = Array.from(new Set(edges.flatMap(e=>[e.source,e.target])));
       const index = new Map(nodes.map((n,i)=>[n,i]));
       const N = nodes.length; const matrix = Array.from({length:N},()=>Array(N).fill(0));
+      const connectedNodes = new Set(edges.flatMap(e=>[e.source,e.target]));
+      
       // Distance weighting setup
       const useW = document.getElementById('useWeighting').checked;
       const dvals = edges.map(e=>e.distance).filter(d=>Number.isFinite(d));
@@ -223,27 +369,55 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
         const t = (e.distance - dmin) / (dmax - dmin);
         return 5.0 - 4.5*t; // 5.0 (close) .. 0.5 (far)
       }
+      
+      // Build edge color mapping (based on source node)
+      // For each edge, store color based on source node
+      // Since matrix is symmetric, we need to track which direction has which color
+      const edgeColorMap = new Map();
       for(const e of edges){
         const i=index.get(e.source), j=index.get(e.target);
         if (i==null || j==null) continue;
         const w = weight(e);
         matrix[i][j] += w; matrix[j][i] += w;
+        // Store edge color based on source node (direction from i to j)
+        const color = getEdgeColor(e.source);
+        edgeColorMap.set(`${i}-${j}`, color);
+        // For reverse direction, we could use target color, but for consistency use source
+        if (!edgeColorMap.has(`${j}-${i}`)) {
+          edgeColorMap.set(`${j}-${i}`, color);
+        }
       }
-      const color = d3.scaleOrdinal(d3.schemeCategory10);
+      
+      // Helper function to get edge color for a chord
+      function getChordColor(chord) {
+        const srcIdx = chord.source.index;
+        const tgtIdx = chord.target.index;
+        // Try to find color based on source node of the chord
+        // Check if there's an edge from source to target
+        const color1 = edgeColorMap.get(`${srcIdx}-${tgtIdx}`);
+        if (color1) return color1;
+        // Otherwise use color from target to source
+        const color2 = edgeColorMap.get(`${tgtIdx}-${srcIdx}`);
+        if (color2) return color2;
+        // Fallback: use color based on source node
+        return getEdgeColor(nodes[srcIdx]);
+      }
+      
       const chord = d3.chord().padAngle(0.02).sortSubgroups(d3.descending)(matrix);
       const arc = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius);
       const ribbon = d3.ribbon().radius(innerRadius);
       const g = svg.attr('viewBox', [-width/2, -height/2, width, height]).append('g');
 
-      // Groups (nodes)
+      // Groups (nodes) - color by amino acid property or chain
       const group = g.append('g')
         .selectAll('g')
         .data(chord.groups)
         .join('g');
       group.append('path')
         .attr('d', arc)
-        .attr('fill', d=>color(d.index))
-        .attr('stroke', '#fff');
+        .attr('fill', d=>getNodeColor(nodes[d.index], connectedNodes, chain1, chain2))
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 1);
       group.append('text')
         .each(d=>{d.angle=(d.startAngle+d.endAngle)/2;})
         .attr('dy','.35em')
@@ -252,15 +426,23 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
         .style('font-size','9px')
         .text(d=>nodes[d.index]);
 
-      // Ribbons (edges)
+      // Ribbons (edges) - color by source node amino acid property
       g.append('g')
         .attr('fill-opacity',0.85)
         .selectAll('path')
         .data(chord)
         .join('path')
         .attr('d', ribbon)
-        .attr('fill', d=>color(d.target.index))
-        .attr('stroke', '#fff');
+        .attr('fill', getChordColor)
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 0.5);
+      
+      // Show export button if we have CIF data
+      if (cachedCIF && chain1 && chain2) {
+        document.getElementById('btnExport').style.display = 'inline-block';
+      } else {
+        document.getElementById('btnExport').style.display = 'none';
+      }
     }
 
     // Wire UI
@@ -268,17 +450,60 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
     const sel1 = document.getElementById('chain1');
     const sel2 = document.getElementById('chain2');
     const cutoffEl = document.getElementById('cutoff');
+    const useWeightingEl = document.getElementById('useWeighting');
     let cachedCIF = null; // store CA rows after parsing
+    
+    // Re-render when distance weighting option changes
+    useWeightingEl.addEventListener('change', () => {
+      if (currentEdges) {
+        renderChord(currentEdges, currentChain1, currentChain2);
+      }
+    });
 
     input.addEventListener('change', async (e)=>{
       setStatus(''); sel1.innerHTML=''; sel2.innerHTML=''; cachedCIF=null;
+      document.getElementById('btnExport').style.display = 'none';
       const file=e.target.files && e.target.files[0]; if(!file) return;
       const name=file.name.toLowerCase(); const buf=await file.text();
       try{
         if (name.endsWith('.csv')){
-          const edges=parseCSV(buf); renderChord(edges); setStatus(`Parsed ${edges.length} edges from CSV.`);
+          const edges=parseCSV(buf); 
+          // Try to detect chains from edges
+          let c1 = null, c2 = null;
+          if (edges.length > 0) {
+            const chains = new Set(edges.flatMap(e => [
+              extractChain(e.source), 
+              extractChain(e.target)
+            ]).filter(c => c));
+            const chainArray = Array.from(chains);
+            if (chainArray.length >= 2) {
+              c1 = chainArray[0];
+              c2 = chainArray[1];
+            } else if (chainArray.length === 1) {
+              c1 = chainArray[0];
+            }
+          }
+          renderChord(edges, c1, c2); 
+          setStatus(`Parsed ${edges.length} edges from CSV.`);
         } else if (name.endsWith('.json')){
-          const edges=parseJSON(buf); renderChord(edges); setStatus(`Parsed ${edges.length} edges from JSON.`);
+          const edges=parseJSON(buf);
+          // Try to detect chains from edges
+          let c1 = null, c2 = null;
+          if (edges.length > 0) {
+            const chains = new Set(edges.flatMap(e => [
+              extractChain(e.source), 
+              extractChain(e.target)
+            ]).filter(c => c));
+            const chainArray = Array.from(chains);
+            if (chainArray.length >= 2) {
+              c1 = chainArray[0];
+              c2 = chainArray[1];
+            } else if (chainArray.length === 1) {
+              c1 = chainArray[0];
+            }
+          }
+          renderChord(edges, c1, c2); 
+          setStatus(`Parsed ${edges.length} edges from JSON.`);
         } else if (name.endsWith('.cif')){
           const rows=parseCIF_CA(buf); cachedCIF=rows;
           const chains = Array.from(new Set(rows.map(r=>r.chain)));
@@ -297,9 +522,84 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
         const c1=sel1.value, c2=sel2.value; const cutoff=Number(cutoffEl.value)||5.0;
         if(!c1||!c2||c1===c2){ setStatus('Please choose two different chains.'); return; }
         const edges=calcContactsFromCA(cachedCIF, c1, c2, cutoff);
-        renderChord(edges); setStatus(`Computed ${edges.length} contacts @ cutoff ${cutoff} Å.`);
+        renderChord(edges, c1, c2); 
+        const interfaces = identifyInterfaces(edges);
+        let msg = `Computed ${edges.length} contacts @ cutoff ${cutoff} Å.`;
+        if (interfaces.length > 0) {
+          msg += ` Found ${interfaces.length} interface segment(s).`;
+        }
+        setStatus(msg);
       }
     });
+    
+    // Export sequences and contacts
+    document.getElementById('btnExport').addEventListener('click', ()=>{
+      if (!cachedCIF || !currentChain1 || !currentChain2) {
+        setStatus('No CIF data available for export.');
+        return;
+      }
+      
+      try {
+        // Extract sequences
+        const seq1 = extractSequence(cachedCIF, currentChain1);
+        const seq2 = extractSequence(cachedCIF, currentChain2);
+        const seq1Str = seq1.map(r => resnameToSeq(r)).join('');
+        const seq2Str = seq2.map(r => resnameToSeq(r)).join('');
+        
+        // Export FASTA files
+        const fasta1 = `>${currentChain1}\n${seq1Str}`;
+        const fasta2 = `>${currentChain2}\n${seq2Str}`;
+        
+        downloadText(`${currentChain1}_sequence.fasta`, fasta1);
+        downloadText(`${currentChain2}_sequence.fasta`, fasta2);
+        
+        // Export contacts CSV
+        if (currentEdges && currentEdges.length > 0) {
+          const csvLines = ['chain1,res1_num,res1_name,chain2,res2_num,res2_name,distance'];
+          for (const e of currentEdges) {
+            const parts1 = e.source.split('_');
+            const parts2 = e.target.split('_');
+            if (parts1.length === 3 && parts2.length === 3) {
+              const c1 = parts1[0], res1 = parts1[1], num1 = parts1[2];
+              const c2 = parts2[0], res2 = parts2[1], num2 = parts2[2];
+              const dist = e.distance !== undefined ? e.distance.toFixed(3) : '';
+              csvLines.push(`${c1},${num1},${res1},${c2},${num2},${res2},${dist}`);
+            }
+          }
+          downloadText(`${currentChain1}_${currentChain2}_contacts.csv`, csvLines.join('\n'));
+        }
+        
+        // Export edges CSV
+        if (currentEdges && currentEdges.length > 0) {
+          const csvLines = ['source,target' + (currentEdges.some(e => e.distance !== undefined) ? ',distance' : '')];
+          for (const e of currentEdges) {
+            if (e.distance !== undefined) {
+              csvLines.push(`${e.source},${e.target},${e.distance.toFixed(3)}`);
+            } else {
+              csvLines.push(`${e.source},${e.target}`);
+            }
+          }
+          downloadText(`${currentChain1}_${currentChain2}_edges.csv`, csvLines.join('\n'));
+        }
+        
+        setStatus('Export completed: FASTA sequences and contact files downloaded.');
+      } catch (err) {
+        setStatus('Export error: ' + err.message);
+      }
+    });
+    
+    // Helper function to download text as file
+    function downloadText(filename, text) {
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   </script>
 </body>
 </html>
