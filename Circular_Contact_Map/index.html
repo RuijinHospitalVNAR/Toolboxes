@@ -174,10 +174,29 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
     }
     
     // Get node color based on chain (all nodes in same chain have same color)
-    function getNodeColor(nodeLabel, chain1, chain2) {
+    // If chain1/chain2 are provided, use them; otherwise auto-detect from nodes
+    function getNodeColor(nodeLabel, chain1, chain2, allNodes) {
       const chain = extractChain(nodeLabel);
-      if (chain === chain1) return '#FFA500'; // orange for chain1
-      if (chain === chain2) return '#20B2AA'; // teal for chain2
+      if (!chain) return '#AAAAAA'; // default gray if no chain found
+      
+      // If chain1/chain2 are provided, use them
+      if (chain1 && chain2) {
+        if (chain === chain1) return '#FFA500'; // orange for chain1
+        if (chain === chain2) return '#20B2AA'; // teal for chain2
+      }
+      
+      // Auto-detect chains from nodes if chain1/chain2 not provided
+      if (allNodes && allNodes.length > 0) {
+        const chains = Array.from(new Set(allNodes.map(n => extractChain(n)).filter(c => c)));
+        if (chains.length >= 2) {
+          // First chain gets chain1 color, second gets chain2 color
+          if (chain === chains[0]) return '#FFA500'; // orange for first chain
+          if (chain === chains[1]) return '#20B2AA'; // teal for second chain
+        } else if (chains.length === 1 && chain === chains[0]) {
+          return '#FFA500'; // orange for single chain
+        }
+      }
+      
       return '#AAAAAA'; // default gray for other chains
     }
     
@@ -598,7 +617,7 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
         .join('g');
       group.append('path')
         .attr('d', arc)
-        .attr('fill', d=>getNodeColor(allNodes[d.index], chain1, chain2))
+        .attr('fill', d=>getNodeColor(allNodes[d.index], chain1, chain2, allNodes))
         .attr('stroke', '#fff')
         .attr('stroke-width', 1);
       group.append('text')
