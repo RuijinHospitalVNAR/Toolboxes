@@ -124,13 +124,10 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
           <div class="mt-3" id="legendBox">
             <div class="small text-muted mb-2"><i class="fas fa-info-circle"></i> <strong>Legend:</strong></div>
             <div class="small">
-              <div class="mb-1"><strong>Node colors:</strong> Based on amino acid properties</div>
+              <div class="mb-1"><strong>Node colors:</strong> Same color for all nodes in the same chain</div>
               <div class="d-flex flex-wrap gap-2 mb-2">
-                <span><span style="display:inline-block;width:12px;height:12px;background:#FF7744;border:1px solid #ccc;"></span> Hydrophobic (ALA, VAL, LEU, ILE, MET, PHE, TRP, PRO, GLY)</span>
-                <span><span style="display:inline-block;width:12px;height:12px;background:#87CEFA;border:1px solid #ccc;"></span> Polar (SER, THR, TYR, ASN, GLN)</span>
-                <span><span style="display:inline-block;width:12px;height:12px;background:#FF0000;border:1px solid #ccc;"></span> Acidic (ASP, GLU)</span>
-                <span><span style="display:inline-block;width:12px;height:12px;background:#B565A7;border:1px solid #ccc;"></span> Basic (LYS, ARG, HIS)</span>
-                <span><span style="display:inline-block;width:12px;height:12px;background:#000000;border:1px solid #ccc;"></span> Cysteine (CYS)</span>
+                <span><span style="display:inline-block;width:12px;height:12px;background:#FFA500;border:1px solid #ccc;"></span> Chain 1 (orange)</span>
+                <span><span style="display:inline-block;width:12px;height:12px;background:#20B2AA;border:1px solid #ccc;"></span> Chain 2 (teal)</span>
               </div>
               <div class="mb-1"><strong>Ribbon colors:</strong> Based on source node amino acid properties</div>
               <div class="mb-1"><strong>Ribbon thickness:</strong> When "Use distance weighting" is enabled, closer contacts contribute more weight; otherwise each contact contributes equally.</div>
@@ -176,11 +173,12 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
       return null;
     }
     
-    // Get node color based on amino acid property
-    function getNodeColor(nodeLabel) {
-      const resname = extractResname(nodeLabel);
-      if (resname) return getAAColor(resname);
-      return '#AAAAAA'; // default gray
+    // Get node color based on chain (all nodes in same chain have same color)
+    function getNodeColor(nodeLabel, chain1, chain2) {
+      const chain = extractChain(nodeLabel);
+      if (chain === chain1) return '#FFA500'; // orange for chain1
+      if (chain === chain2) return '#20B2AA'; // teal for chain2
+      return '#AAAAAA'; // default gray for other chains
     }
     
     // Get edge color based on source node amino acid property
@@ -458,6 +456,18 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
       return 0;
     }
     
+    // Get all nodes from CIF data (for proper ordering)
+    function getAllNodesFromCIF(allAtoms, chain1, chain2) {
+      const nodes = new Set();
+      for (const atom of allAtoms) {
+        if (atom.atomId === 'CA' && (atom.chain === chain1 || atom.chain === chain2)) {
+          const nodeLabel = `${atom.chain}_${atom.resname}_${atom.resnum}`;
+          nodes.add(nodeLabel);
+        }
+      }
+      return Array.from(nodes);
+    }
+    
     // Sort and arrange nodes by chain (matching Python version)
     // Order: chain2_nodes + other_nodes + chain1_nodes
     function arrangeNodesByChain(allNodes, chain1, chain2) {
@@ -511,8 +521,18 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
       svg.selectAll('*').remove();
       const width=760, height=760, innerRadius= Math.min(width, height)*0.5 - 80, outerRadius=innerRadius+10;
       
-      // Get all nodes from edges (only connected nodes)
+      // Get all nodes - if we have CIF data, get all nodes from both chains
       let allNodes = Array.from(new Set(edges.flatMap(e=>[e.source,e.target])));
+      if (cachedCIF && chain1 && chain2) {
+        // Get all nodes from CIF (including unconnected ones)
+        const allNodesFromCIF = getAllNodesFromCIF(cachedCIF, chain1, chain2);
+        // Merge with connected nodes
+        const connectedNodesSet = new Set(allNodes);
+        for (const node of allNodesFromCIF) {
+          connectedNodesSet.add(node);
+        }
+        allNodes = Array.from(connectedNodesSet);
+      }
       
       // Arrange nodes by chain (chain2 first, then chain1)
       allNodes = arrangeNodesByChain(allNodes, chain1, chain2);
@@ -571,14 +591,14 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
       const ribbon = d3.ribbon().radius(innerRadius);
       const g = svg.attr('viewBox', [-width/2, -height/2, width, height]).append('g');
 
-      // Groups (nodes) - color by amino acid property or chain
+      // Groups (nodes) - color by chain (all nodes in same chain have same color)
       const group = g.append('g')
         .selectAll('g')
         .data(chord.groups)
         .join('g');
       group.append('path')
         .attr('d', arc)
-        .attr('fill', d=>getNodeColor(allNodes[d.index]))
+        .attr('fill', d=>getNodeColor(allNodes[d.index], chain1, chain2))
         .attr('stroke', '#fff')
         .attr('stroke-width', 1);
       group.append('text')
@@ -587,7 +607,7 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
         .attr('transform', d=>`rotate(${d.angle*180/Math.PI-90}) translate(${outerRadius+6}) ${d.angle>Math.PI?"rotate(180)":''}`)
         .attr('text-anchor', d=>d.angle>Math.PI?'end':null)
         .style('font-size','9px')
-        .text(d=>allNodes[d.index]); // Show label for all nodes (all are connected)
+        .text(d=>allNodes[d.index]); // Show label for all nodes (connected and unconnected)
 
       // Ribbons (edges) - color by source node amino acid property
       g.append('g')
