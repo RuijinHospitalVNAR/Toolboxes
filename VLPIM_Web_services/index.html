@@ -497,6 +497,11 @@
                     An integrated computational workflow for modulating protein immunogenicity through epitope identification, 
                     MHC-II binding evaluation, and structural superposition.
                 </p>
+                <div style="margin-top: 1rem;">
+                    <small style="opacity: 0.9;">
+                        <i class="fas fa-eye"></i> Page views: <span id="pageViews">{{ pageViews }}</span>
+                    </small>
+                </div>
                 <div class="hero-buttons">
                     <button class="btn-hero btn-hero-primary" @click="scrollTo('epitope')">
                         <i class="fas fa-search"></i> Epitope identify
@@ -1223,41 +1228,27 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
             },
             methods: {
                 initPageViews() {
-                    // Use localStorage to track page views (client-side only)
+                    // Use localStorage and sessionStorage to track page views (client-side only)
                     // For server-side tracking, you would need a backend service
                     const storageKey = 'vlpim_page_views';
-                    const lastVisitKey = 'vlpim_last_visit';
-                    const today = new Date().toDateString();
+                    const sessionKey = 'vlpim_session';
                     
                     try {
-                        // Get stored views
+                        // Check if this is a new session (not a page refresh)
+                        const sessionId = sessionStorage.getItem(sessionKey);
                         let views = parseInt(localStorage.getItem(storageKey) || '0', 10);
-                        const lastVisit = localStorage.getItem(lastVisitKey);
                         
-                        // Increment if this is a new visit today (not the same session)
-                        if (lastVisit !== today) {
+                        if (!sessionId) {
+                            // New session - increment view count
+                            sessionStorage.setItem(sessionKey, Date.now().toString());
                             views += 1;
                             localStorage.setItem(storageKey, views.toString());
-                            localStorage.setItem(lastVisitKey, today);
                         }
                         
                         this.pageViews = views;
-                        
-                        // Update display
-                        this.$nextTick(() => {
-                            this.updatePageViewsDisplay();
-                        });
                     } catch (e) {
                         console.warn('Page view counter initialization failed:', e);
                         this.pageViews = 0;
-                    }
-                },
-                updatePageViewsDisplay() {
-                    // Format the number with commas for better readability
-                    const formatted = this.pageViews.toLocaleString();
-                    const element = document.getElementById('pageViews');
-                    if (element) {
-                        element.textContent = formatted;
                     }
                 },
                 getEmbeddedText(id) {
