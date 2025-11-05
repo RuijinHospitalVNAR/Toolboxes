@@ -1415,10 +1415,56 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                     if (v < 70) return 'score-medium';
                     return 'score-low';
                 },
+                // Reset methods for each module
+                resetEpitopeModule() {
+                    // Reset Step 1: Epitope identify module
+                    this.advancedEpitopes = [];
+                    this.epitopeRows = [];
+                    this.epitopeProcessing.active = false;
+                    this.epitopeProcessing.value = 0;
+                    if (this._epiTimer) {
+                        clearInterval(this._epiTimer);
+                        this._epiTimer = null;
+                    }
+                    // Clear error message related to epitope module
+                    if (this.errorMessage && (this.errorMessage.includes('epitope') || this.errorMessage.includes('Epitope'))) {
+                        this.errorMessage = '';
+                    }
+                },
+                resetImmunogenicityModule() {
+                    // Reset Step 4.1: Immunogenicity analysis module
+                    this.wy2Peptides = [];
+                    this.wy2Seqsum = [];
+                    this.peptideRows = [];
+                    this.wy2Processing.active = false;
+                    this.wy2Processing.value = 0;
+                    if (this._wy2Timer) {
+                        clearInterval(this._wy2Timer);
+                        this._wy2Timer = null;
+                    }
+                    // Clear error message related to immunogenicity module
+                    if (this.errorMessage && (this.errorMessage.includes('immunogenicity') || this.errorMessage.includes('S^im') || this.errorMessage.includes('wy2'))) {
+                        this.errorMessage = '';
+                    }
+                },
+                resetStructureModule() {
+                    // Reset Step 4.2: Structural superposition module
+                    this.rmsdResult = null;
+                    this.rmsdError = '';
+                    this.showRmsdResult = false;
+                    this.rmsdProcessing.active = false;
+                    this.rmsdProcessing.value = 0;
+                    if (this._rmsdTimer) {
+                        clearInterval(this._rmsdTimer);
+                        this._rmsdTimer = null;
+                    }
+                },
                 handleNetMHCIIUpload(evt) {
                     try {
                         const file = evt.target.files[0];
                         if (!file) return;
+                        // Reset epitope module when new file is uploaded
+                        this.resetEpitopeModule();
                         this.netmhciiFileName = file.name;
                         this.errorMessage = '';
                         
@@ -1640,6 +1686,8 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                     try {
                         const file = evt.target.files[0];
                         if (!file) return;
+                        // Reset structure module when new file is uploaded
+                        this.resetStructureModule();
                         const reader = new FileReader();
                         reader.onload = (e) => {
                             const text = e.target.result || '';
@@ -1652,6 +1700,7 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                                 this.predictedFileName = file.name;
                                 this.predictedFileObj = file;
                             }
+                            // Ensure results are cleared (already done in resetStructureModule, but double-check)
                             this.rmsdResult = null;
                             this.rmsdError = '';
                             this.showRmsdResult = false;
@@ -2624,6 +2673,8 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                 loadEpitopeExample(){
                     try {
                         this.isNetmhciiLoading = true;
+                        // Reset epitope module when loading example
+                        this.resetEpitopeModule();
                         this.errorMessage = '';
                         
                         // Load example data from embedded script tag
@@ -2661,6 +2712,11 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                 // Validate VLP sequence
                 validateVlpSequence(){
                     const text = this.vlpSequenceText.trim();
+                    // Reset epitope module if sequence is being modified and there are existing results
+                    if ((this.advancedEpitopes && this.advancedEpitopes.length > 0) || 
+                        (this.epitopeRows && this.epitopeRows.length > 0)) {
+                        this.resetEpitopeModule();
+                    }
                     this.vlpSequenceLength = 0;
                     this.vlpSequenceError = '';
                     
@@ -3158,6 +3214,8 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                     try {
                         const file = evt.target.files && evt.target.files[0];
                         if (!file) return;
+                        // Reset immunogenicity module when new file is uploaded
+                        this.resetImmunogenicityModule();
                         this.wy2CsvName = file.name;
                         this.errorMessage = '';
                         
@@ -3229,6 +3287,8 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                 async loadWy2Example(){
                     try{
                         this.isCsvLoading = true;
+                        // Reset immunogenicity module when loading example
+                        this.resetImmunogenicityModule();
                         this.errorMessage = '';
                         // Try embedded inline example first
                         const inlineEl = document.getElementById('example_seq_a_csv');
@@ -3269,6 +3329,8 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                     try {
                         this.isRefLoading = true;
                         this.isPredLoading = true;
+                        // Reset structure module when loading example
+                        this.resetStructureModule();
                         // Make names visible, delay loading content to calculation (like CSV flow)
                         this.referenceFileName = 'example_1_ref.pdb';
                         this.predictedFileName = 'example_1_pred.pdb';
@@ -3280,9 +3342,6 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                         this.useEmbeddedPred = true;
                         this.embeddedRefId = 'pdb_6htx';
                         this.embeddedPredId = 'pdb_6htx_var';
-                        this.rmsdResult = null;
-                        this.rmsdError = '';
-                        this.showRmsdResult = false;
                         this.scrollTo('structure');
                     } catch (e) {
                         this.rmsdError = e.message || 'Failed to load example';
@@ -3296,6 +3355,8 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                     try {
                         this.isRefLoading = true;
                         this.isPredLoading = true;
+                        // Reset structure module when loading example
+                        this.resetStructureModule();
                         // Like CSV flow: only show names; delay constructing content/files to calculation
                         this.referenceFileName = 'example_1_ref.pdb';
                         this.referencePdbContent = '';
@@ -3307,10 +3368,6 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                         this.predictedFileObj = null;
                         this.useEmbeddedPred = true;
                         this.embeddedPredId = 'pdb_6htx_far';
-
-                        this.rmsdResult = null;
-                        this.rmsdError = '';
-                        this.showRmsdResult = false;
                         this.scrollTo('structure');
                     } catch (e) {
                         this.rmsdError = e.message || 'Failed to load example';
