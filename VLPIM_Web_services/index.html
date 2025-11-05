@@ -6,6 +6,7 @@
     <title>VLPIM - Immunogenicity Modulation Tool</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/svd-js@1.4.1/dist/svd.min.js"></script>
     <script>
@@ -58,7 +59,9 @@
             padding: 0 20px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: center; /* center brand and nav vertically */
+            height: 100%;        /* match navbar height */
+            min-height: 60px;    /* ensure minimum height for alignment */
         }
 
         .nav-brand {
@@ -66,32 +69,60 @@
             font-weight: bold;
             color: var(--primary-color);
             text-decoration: none;
+            display: flex;            /* align icon and text */
+            align-items: center;      /* vertical center */
+            gap: 8px;                 /* spacing between icon and text */
+            line-height: 1;           /* consistent line height */
+            height: 100%;             /* match nav container height */
+        }
+        .nav-brand i { 
+            font-size: 1.75rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
         }
 
         .nav-menu {
             display: flex;
             list-style: none;
-            gap: 2rem;
-            align-items: center;
+            gap: 1.25rem;
+            align-items: center;      /* vertical center all nav items */
+            margin: 0;                /* remove default margin */
+            padding: 0;               /* remove default padding */
+            height: 100%;             /* match nav container height */
         }
 
         .nav-group {
             display: flex;
             gap: 1.5rem;
             align-items: center;
+            height: 100%;
         }
 
         .nav-item {
             position: relative;
+            display: flex;            /* ensure dropdown toggle aligns */
+            align-items: center;
+            height: 100%;
         }
 
         .nav-link {
             color: #555;
             text-decoration: none;
             font-weight: 500;
-            padding: 0.5rem 0;
+            padding: 0.5rem 0.25rem;
             transition: color 0.3s;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            line-height: 1;           /* consistent line height */
+            height: 100%;             /* match parent height */
+        }
+        .nav-link i {
+            line-height: 1;
+            display: flex;
+            align-items: center;
         }
 
         .nav-link:hover {
@@ -102,6 +133,17 @@
             color: var(--secondary-color);
             border-bottom: 2px solid var(--secondary-color);
         }
+
+        /* Dropdown visual tweaks */
+        .navbar-custom .dropdown-toggle::after {
+            margin-left: 6px;
+        }
+        .navbar-custom .dropdown-menu {
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            border-radius: 8px;
+            border: 1px solid #e7eaf0;
+        }
+        .navbar-custom .dropdown-item i { margin-right: 8px; }
 
         /* Hero Section */
         .hero-section {
@@ -460,31 +502,42 @@
                 </a>
                 <ul class="nav-menu">
                     <div class="nav-group">
-                        <li class="nav-item">
-                            <a class="nav-link" href="readme.html" target="_blank">Readme</a>
+                        <!-- Documents dropdown FIRST -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="docsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-book"></i> Documents
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="docsDropdown">
+                                <li><a class="dropdown-item" href="readme.html" target="_blank"><i class="fas fa-file-alt"></i> README</a></li>
+                                <li><a class="dropdown-item" href="toolset.html" target="_blank"><i class="fas fa-tools"></i> Toolset</a></li>
+                            </ul>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" :class="{active: currentSection === 'epitope'}" @click="scrollTo('epitope')">Epitope identify</a>
+                            <a class="nav-link" :class="{active: currentSection === 'epitope'}" @click="scrollTo('epitope')">
+                                <i class="fas fa-search"></i> Epitope identify
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" :class="{active: currentSection === 'analyze'}" @click="scrollTo('analyze')">Immunogenicity analyze</a>
+                            <a class="nav-link" :class="{active: currentSection === 'analyze'}" @click="scrollTo('analyze')">
+                                <i class="fas fa-chart-line"></i> Immunogenicity analyze
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" :class="{active: currentSection === 'structure'}" @click="scrollTo('structure')">Structural superposition</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="toolset.html" target="_blank">Toolset</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="https://ruijinhospitalvnar.github.io/Toolboxes/">Back to Home</a>
+                            <a class="nav-link" :class="{active: currentSection === 'structure'}" @click="scrollTo('structure')">
+                                <i class="fas fa-cube"></i> Structural superposition
+                            </a>
                         </li>
                     </div>
                     <div class="nav-group">
                         <li class="nav-item">
-                            <a class="nav-link" :class="{active: currentSection === 'docs'}" @click="scrollTo('docs')">Documents</a>
+                            <a class="nav-link" :class="{active: currentSection === 'cite'}" @click="scrollTo('cite')">
+                                <i class="fas fa-quote-left"></i> Cite us
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" :class="{active: currentSection === 'cite'}" @click="scrollTo('cite')">Cite us</a>
+                            <a class="nav-link" href="https://ruijinhospitalvnar.github.io/Toolboxes/">
+                                <i class="fas fa-arrow-left"></i> Back to Home
+                            </a>
                         </li>
                     </div>
                 </ul>
@@ -528,11 +581,11 @@
             <section class="section" id="epitope">
                 <div class="section-header">
                     <h2 class="section-title">
-                        <i class="fas fa-search"></i> Step 1:Epitope identify
+                        <i class="fas fa-search"></i> Step 1: Epitope identify
                     </h2>
                 </div>
                 <div class="section-body">
-                    <p>VLPIM uses <strong>NetMHCIIpan</strong> for CD4+ T-cell epitope identification.</p>
+                    <p>VLPIM uses <strong>NetMHCIIpan</strong> for CD4<sup>+</sup> T-cell epitope identification.</p>
                     
                     <div class="upload-area mt-4">
                         <h3>Upload files for epitope identification</h3>
@@ -612,24 +665,27 @@
                             <div class="mode-selection" style="margin:0; white-space:nowrap;">
                                 <input type="radio" id="advEnhance" class="mode-radio" value="enhance" v-model="analysisMode">
                                 <label for="advEnhance" class="mode-label">
-                                    <i class="fas fa-arrow-up"></i> Enhance
+                                    <i class="fas fa-arrow-up"></i> Enhance mode
                                 </label>
                                 <input type="radio" id="advReduce" class="mode-radio" value="reduce" v-model="analysisMode">
                                 <label for="advReduce" class="mode-label">
-                                    <i class="fas fa-arrow-down"></i> Reduce
+                                    <i class="fas fa-arrow-down"></i> Reduce mode
                                 </label>
                             </div>
                         </div>
                         <div class="mt-2">
                             <small class="text-muted">
-                                <strong>Target length:</strong> Extends core sequences to the specified length (9-15 aa) using amino acids from the VLP sequence. 
-                                If core is already at or above target length, it remains unchanged.
+                                <strong>Target length:</strong> Extends core sequences to the specified length (9–15 aa) using amino acids from the VLP sequence. If core is already at or above target length, it remains unchanged.
+                                <br>
+                                <strong>Enhance mode:</strong> prioritize higher overall scores (favoring immunogenicity reduction).
+                                <br>
+                                <strong>Reduce mode:</strong> prioritize lower overall scores (favoring immunogenicity enhancement).
                             </small>
                         </div>
                         
                         <div class="mt-4 w-100 d-flex justify-content-center" style="gap:12px;">
                             <button class="btn btn-primary" @click="runAdvancedEpitopeAnalysis" :disabled="!netmhciiFileContent || !vlpSequenceText || vlpSequenceError || vlpSequenceLength === 0">
-                                <i class="fas fa-microscope"></i> epitopes identification
+                                <i class="fas fa-microscope"></i> Epitopes identification
                             </button>
                             <button class="btn btn-success" @click="exportAdvancedEpitopes" :disabled="!advancedEpitopes || !advancedEpitopes.length">
                                 <i class="fas fa-file-export"></i> Export extended epitopes
@@ -665,7 +721,7 @@
                                             <th>End</th>
                                             <th>Core</th>
                                             <th>Allele</th>
-                                            <th>IC50 (nM)</th>
+                                            <th>IC<sub>50</sub> (nM)</th>
                                             <th>%Rank_EL</th>
                                             <th>Binding Count</th>
                                         </tr>
@@ -714,7 +770,7 @@
                                     <tr>
                                         <th>Peptide</th>
                                         <th>Allele</th>
-                                        <th>IC50 (nM)</th>
+                                        <th>IC<sub>50</sub> (nM)</th>
                                         <th>Rank (%)</th>
                                         <th>Position</th>
                                     </tr>
@@ -736,12 +792,81 @@
                     <ul class="mt-3">
                         <li>Epitope prediction for full VLP sequence using NetMHCIIpan</li>
                         <li>Multi-allele HLA-DRB1 binding evaluation</li>
-                        <li>Epitope rank by binding performence (sum of strong and weak binding)</li>
+                        <li>Epitope ranking based on binding performance (sum of strong and weak binders, Binding count). A higher score indicates epitopes more suitable for immunogenicity reduction, whereas a lower score suggests epitopes favorable for immunogenicity enhancement.</li>
                         <li>Customizable peptide length and number of epitopes (default: 15 amino acids and 10 epitopes)</li>
                     </ul>
                     <div class="alert alert-info mt-4">
                         <i class="fas fa-info-circle"></i>
                         <strong>Note:</strong> Epitope identification requires NetMHCIIpan prediction results (webservice: https://services.healthtech.dtu.dk/services/NetMHCIIpan-4.3/). Example files are provided at the bottom of this tool framework.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 2: Mutation pool generation (ProteinMPNN) -->
+            <section class="section" id="mutation">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-vial"></i> Step 2: Mutation pool generation
+                    </h2>
+                </div>
+                <div class="section-body">
+                    <p>Generate a mutation pool for downstream immunogenicity optimization using <strong>ProteinMPNN</strong>.</p>
+                    <div class="upload-area mt-4">
+                        <h3>ProteinMPNN setup and usage</h3>
+                        <p class="text-muted mb-3">Refer to the toolset for recommended parameters, input formats, and example commands.</p>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                Typical workflow: prepare structure (PDB/CIF) → define fixed/backbone regions → run ProteinMPNN to sample sequences → collect mutation candidates for Step 3/4.
+                            </small>
+                        </div>
+                        <div class="mt-3 d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                            <a href="toolset.html" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-up-right-from-square"></i> Open Toolset: ProteinMPNN
+                            </a>
+                            <a href="#prediction" class="btn btn-sm btn-primary">
+                                Go to Step 3
+                            </a>
+                        </div>
+                        <h5 class="mt-4 text-start">Key points:</h5>
+                        <ul class="mt-2 text-start">
+                            <li>Batch generation of variants for pool generation</li>
+                            <li><strong>ProteinMPNN parameters:</strong> sampling temperature (0.1–0.5), sequences per target (50–200), fixed-backbone mode, residue masking for conserved regions</li>
+                            <li><strong>Inputs/outputs:</strong> input PDB/CIF (with chain selection); output FASTA/CSV sequence pool for Step 3</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 3: Immunogenicity and structure prediction (NetMHCIIpan + AlphaFold3) -->
+            <section class="section" id="prediction">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-flask"></i> Step 3: Immunogenicity and structure prediction
+                    </h2>
+                </div>
+                <div class="section-body">
+                    <p>Evaluate the mutation pool with <strong>NetMHCIIpan</strong> (immunogenicity) and <strong>AlphaFold3</strong> (structure prediction), then proceed to Step 4.</p>
+                    <div class="upload-area mt-4">
+                        <h3>NetMHCIIpan + AlphaFold3 workflow</h3>
+                        <p class="text-muted mb-3">See toolset for command templates, inputs/outputs, and post-processing recommendations.</p>
+                        <div class="mt-3 d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                            <a href="toolset.html" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-up-right-from-square"></i> Open Toolset: NetMHCIIpan & AlphaFold3
+                            </a>
+                            <a href="#analyze" class="btn btn-sm btn-primary">
+                                Go to Step 4.1
+                            </a>
+                            <a href="#structure" class="btn btn-sm btn-primary">
+                                Go to Step 4.2
+                            </a>
+                        </div>
+                        <h5 class="mt-4 text-start">Key points:</h5>
+                        <ul class="mt-2 text-start">
+                            <li>Feed NetMHCIIpan outputs （immunogenicity) outputs and AlphaFold3 outputs(structure) to Step 4.1 and 4.2 for detailed analysis</li>
+                            <li>Keep inputs/outputs consistent for traceability and reproducibility</li>
+                            <li><strong>NetMHCIIpan parameters:</strong> provide HLA-DRB1 allele list; interpret %Rank thresholds (strong ≤ 1.0, weak ≤ 5.0); export wide-table output</li>
+                            <li><strong>AlphaFold3 parameters:</strong> set recycles/seeds; optionally use a reference for Step 4.2; retain predicted PDB/CIF for RMSD/TM-score</li>
+                        </ul>
                     </div>
                 </div>
             </section>
@@ -768,12 +893,25 @@
                                 <i class="fas fa-arrow-down"></i> Reduce mode
                             </label>
                         </div>
+                        <div class="mt-0 mb-3 text-center">
+                            <small class="text-muted">
+                                Enhance mode: prioritize higher overall scores (favoring increased immunogenicity).<br>
+                                Reduce mode: prioritize lower overall scores (favoring decreased immunogenicity).
+                            </small>
+                        </div>
 
-                        <div class="file-input-wrapper">
-                            <label for="csvFile" class="file-label">
-                                <i class="fas fa-file-upload"></i> NetMHCIIpan output file
-                            </label>
-                            <input type="file" id="csvFile" class="file-input" accept=".csv,.txt,.xls,.xlsx" @change="handleWy2Csv">
+                        <div class="d-flex align-items-center justify-content-center" style="gap:1rem; flex-wrap:wrap;">
+                            <div class="file-input-wrapper" style="margin:0;">
+                                <label for="csvFile" class="file-label">
+                                    <i class="fas fa-file-upload"></i> NetMHCIIpan output file
+                                </label>
+                                <input type="file" id="csvFile" class="file-input" accept=".csv,.txt,.xls,.xlsx" @change="handleWy2Csv">
+                            </div>
+                            <div>
+                                <button class="btn btn-hero btn-hero-white" @click="loadWy2Example">
+                                    <i class="fas fa-download"></i> Load example
+                                </button>
+                            </div>
                         </div>
                         <div class="mt-2">
                             <small class="text-muted">
@@ -781,21 +919,20 @@
                             </small>
                         </div>
                         <div v-if="isCsvLoading" class="mt-2"><span class="badge badge-info">Loading example...</span></div>
-                        
+
                         <div v-if="wy2CsvName" class="mt-3">
                             <span class="badge badge-info">{{ wy2CsvName }}</span>
-                        </div>
-
-                        <div class="mt-3">
-                            <small class="text-muted">
-                                Output will appear in the tables below and can be exported.
-                            </small>
                         </div>
 
                         <div class="mt-4">
                             <button class="btn-hero btn-hero-primary" @click="processWy2" :disabled="!wy2CsvText">
                                 <i class="fas fa-chart-bar"></i> Compute S<sup>im</sup> scores
                             </button>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    Output will appear in the tables below and can be exported.
+                                </small>
+                            </div>
                             <div v-if="wy2Processing.active" class="mt-3">
                                 <div class="progress" style="height: 8px;">
                                     <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" :style="`width:${wy2Processing.value}%`"></div>
@@ -812,7 +949,7 @@
                             <div class="d-flex align-items-center gap-2">
                                 <select class="form-select form-select-sm" v-model="peptideSortBy" style="width:200px">
                                     <option value="overall">Sort by overall score</option>
-                                    <option value="ic50">Sort by best IC50</option>
+                                    <option value="ic50">Sort by best IC₅₀</option>
                                     <option value="alleles">Sort by allele count</option>
                                 </select>
                                 <button class="btn btn-sm btn-success" @click="exportWy2Combined" :disabled="!wy2Peptides.length">
@@ -828,7 +965,7 @@
                                         <th>ID</th>
                                         <th>Peptide</th>
                                         <th>Alleles</th>
-                                        <th>Best IC50 (nM)</th>
+                                        <th>Best IC<sub>50</sub> (nM)</th>
                                         <th>S<sup>im</sup> score</th>
                                     </tr>
                                 </thead>
@@ -856,7 +993,7 @@
                     <h5 class="mt-4">Key features:</h5>
                     <ul class="mt-3">
                         <li>Enhance and reduce modes to prioritize sequences or peptides</li>
-                        <li>Sorting by overall score, best IC50, or allele count</li>
+                        <li>Sorting by overall score, best IC₅₀, or allele count</li>
                         <li>Export combined results to CSV with one click</li>
                     </ul>
 
@@ -992,7 +1129,7 @@
                 </div>
                 <div class="section-body">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <h5><i class="fas fa-file-alt"></i> README</h5>
                             <p>Comprehensive guide covering installation, configuration, and usage of VLPIM.</p>
                             <p><small class="text-muted">Includes quick start guide, prerequisites, and troubleshooting.</small></p>
@@ -1002,7 +1139,7 @@
                                 </a>
                             </p>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <h5><i class="fas fa-tools"></i> Tool setup</h5>
                             <p>Usage parameters for ProteinMPNN, NetMHCIIpan, AlphaFold3, and Rosetta wrappers are documented on the dedicated Toolset page.</p>
                             <p class="mt-2">
@@ -1011,7 +1148,7 @@
                                 </a>
                             </p>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <h5><i class="fas fa-envelope"></i> Contact us</h5>
                             <p>Get help and support from the VLPIM team, Research Center for Medicinal Structural Biology, National Research Center for Translational Medicine at Shanghai, State Key Laboratory of Medical Genomics, Ruijin Hospital, Shanghai Jiao Tong University School of Medicine, Shanghai 200025, China.</p>
                             <p><small class="text-muted">
@@ -1037,8 +1174,7 @@
   title={VLPIM: A Comprehensive Tool for Immunogenicity Modulation of Virus-like Particles},
   author={Chufan Wang},
   year={2025},
-  url={https://github.com/RuijinHospitalVNAR/VLPIM}
-}</code></pre>
+  url={https://github.com/RuijinHospitalVNAR/Toolboxes}</code></pre>
                     </div>
                     <h5 class="mt-4">Acknowledgments</h5>
                     <ul class="mt-3">
@@ -1125,6 +1261,13 @@ ATOM      3  CA  SER A   3      64.010  66.100  39.900  1.00 20.00           C
 ATOM      4  CA  THR A   4      75.400  77.350  41.100  1.00 20.00           C
 TER
 END
+    </script>
+
+    <!-- Embedded example for Immunogenicity analysis (seq-a .csv, wide-table two header rows) -->
+    <script type="text/plain" id="example_seq_a_csv">,,,,DRB1_0101,,,,,,DRB1_0301
+Pos,Peptide,ID,Target,Core,Score,Rank,Score_BA,nM,Rank_BA,Core,Score,Rank,Score_BA,nM,Rank_BA
+1,LSFLPSDFFPSVRDL,seqA_demo,NA,FLPSDFFPS,0.000379,60.28,0.487847,255.030258,21.37,FLPSDFFPS,0.004044,36.73,0.216574,4800.59668,40.47
+1,MSNLPDDYFPSVEEL,seqA_demo2,NA,DDYFPSVEE,0.000010,95.00,0.151359,9721.617188,85.62,NLPDDYFPS,0.000908,56.87,0.138571,11164.2334,66.58
     </script>
 
     <script type="text/plain" id="example_netmhcii_data">
@@ -1227,7 +1370,7 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                     // Reassign rank after sorting
                     sorted.forEach((r, idx) => { r.Rank = idx + 1; });
                     return sorted;
-                }
+                },
             },
             methods: {
                 initPageViews() {
@@ -2561,7 +2704,7 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                     // Sequence is valid
                     this.vlpSequenceError = '';
                 },
-                // epitopes identification
+                // Epitopes identification
                 runAdvancedEpitopeAnalysis(){
                     console.log('runAdvancedEpitopeAnalysis called');
                     console.log('netmhciiFileContent:', this.netmhciiFileContent ? 'exists' : 'missing');
@@ -3061,6 +3204,41 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
+                },
+                async loadWy2Example(){
+                    try{
+                        this.isCsvLoading = true;
+                        this.errorMessage = '';
+                        // Try embedded inline example first
+                        const inlineEl = document.getElementById('example_seq_a_csv');
+                        if (inlineEl) {
+                            const text = (inlineEl.textContent || inlineEl.innerText || '').trim();
+                            if (text) {
+                                this.wy2CsvText = text;
+                                this.wy2CsvName = 'seq-a .csv (embedded example)';
+                                this.scrollTo('analyze');
+                                return;
+                            }
+                        }
+                        // Fallback: fetch file next to page
+                        try {
+                            const url = 'seq-a%20.csv';
+                            const res = await fetch(url, { cache: 'no-store' });
+                            if (res.ok) {
+                                const text = await res.text();
+                                this.wy2CsvText = text;
+                                this.wy2CsvName = 'seq-a .csv (example)';
+                                this.scrollTo('analyze');
+                                return;
+                            }
+                        } catch(_) {}
+                        // If neither embedded nor external example is available
+                        throw new Error('Embedded example not found and external example unavailable.');
+                    }catch(e){
+                        this.errorMessage = e.message || 'Failed to load example';
+                    }finally{
+                        this.isCsvLoading = false;
+                    }
                 },
                 parseTwoHeaderCsv(text){ const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(x=>x.trim().length>0); if(lines.length<3) throw new Error('Need at least two header rows and one data row'); const sep=(lines[0].includes('\t')||lines[1].includes('\t'))?'\t':','; const headerAlleles=lines[0].split(sep).map(s=>s.trim()); const headerFields=lines[1].split(sep).map(s=>s.trim()); const dataRows=lines.slice(2).map(l=>l.split(sep).map(s=>s.trim())); return {headerAlleles, headerFields, dataRows}; },
                 normalizeAllele(a){ try{ const code=a.split('_')[1]; return `DRB1*${code.slice(0,2)}:${code.slice(2)}`; }catch(_){ return a; } },
