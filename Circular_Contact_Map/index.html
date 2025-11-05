@@ -198,15 +198,16 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
       return '#AAAAAA'; // default gray
     }
     
-    // Extract sequence from CA rows
-    function extractSequence(caRows, chainId) {
-      const chainResidues = caRows.filter(r => r.chain === chainId);
+    // Extract sequence from CA atoms or all atoms
+    function extractSequence(allAtoms, chainId) {
+      // Extract CA atoms for this chain
+      const caAtoms = allAtoms.filter(a => a.chain === chainId && a.atomId === 'CA');
       // Sort by residue number
-      chainResidues.sort((a, b) => a.resnum - b.resnum);
+      caAtoms.sort((a, b) => a.resnum - b.resnum);
       // Get unique residues (in case of duplicates)
       const seen = new Set();
       const unique = [];
-      for (const r of chainResidues) {
+      for (const r of caAtoms) {
         const key = `${r.resnum}_${r.resname}`;
         if (!seen.has(key)) {
           seen.add(key);
@@ -296,48 +297,164 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
       if (Array.isArray(data.edges)) return data.edges;
       throw new Error('JSON must be an array of edges or {edges:[...]}.');
     }
-    // Simple CIF parser: read atom_site loop, collect CA rows per chain
-    function parseCIF_CA(text){
+    // Standard amino acids (3-letter codes)
+    const standardAAs = new Set([
+      'ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE', 
+      'LYS', 'LEU', 'MET', 'ASN', 'PRO', 'GLN', 'ARG', 'SER', 
+      'THR', 'VAL', 'TRP', 'TYR'
+    ]);
+    
+    // Enhanced CIF parser: read atom_site loop, collect all atoms (not just CA)
+    // This matches Python version's approach of checking all non-hydrogen atoms
+    function parseCIF_AllAtoms(text){
       const lines = text.split(/\r?\n/);
-      let inLoop=false; const headerCols={}; const rows=[];
+      let inLoop=false; const headerCols={}; const allAtoms=[];
       for(const raw of lines){
         const line = raw.trim(); if(!line) continue;
         if (line.startsWith('loop_')) { inLoop=false; for(const k in headerCols) delete headerCols[k]; continue; }
         if (line.startsWith('_atom_site.')) { inLoop=true; const name=line.replace('_atom_site.','').trim(); headerCols[name]=Object.keys(headerCols).length; continue; }
         if (inLoop && !line.startsWith('#')){
           const parts=line.split(/\s+/);
-          const li=headerCols['label_atom_id'], ci=headerCols['label_asym_id'], ri=headerCols['label_seq_id'], xi=headerCols['Cartn_x'], yi=headerCols['Cartn_y'], zi=headerCols['Cartn_z'], rn=headerCols['label_comp_id'];
-          if([li,ci,ri,xi,yi,zi,rn].some(v=>v==null)) continue;
-          if (parts.length<=Math.max(li,ci,ri,xi,yi,zi,rn)) continue;
-          if (parts[li]==='CA'){
-            const rec={
-              chain: parts[ci],
-              resnum: Number(parts[ri]),
-              resname: parts[rn],
-              x: Number(parts[xi]), y: Number(parts[yi]), z: Number(parts[zi]),
-            };
-            if (Number.isFinite(rec.x) && Number.isFinite(rec.y) && Number.isFinite(rec.z)) rows.push(rec);
+          // Try label_asym_id first, fallback to auth_asym_id
+          const ci=headerCols['label_asym_id'] != null ? headerCols['label_asym_id'] : headerCols['auth_asym_id'];
+          const ri=headerCols['label_seq_id'] != null ? headerCols['label_seq_id'] : headerCols['auth_seq_id'];
+          const xi=headerCols['Cartn_x'], yi=headerCols['Cartn_y'], zi=headerCols['Cartn_z'];
+          const rn=headerCols['label_comp_id'] != null ? headerCols['label_comp_id'] : headerCols['auth_comp_id'];
+          const li=headerCols['label_atom_id'] != null ? headerCols['label_atom_id'] : headerCols['auth_atom_id'];
+          const ic=headerCols['pdbx_PDB_ins_code']; // insertion code
+          const ts=headerCols['type_symbol']; // type symbol (element)
+          
+          if([ci,ri,xi,yi,zi,rn,li].some(v=>v==null)) continue;
+          if (parts.length<=Math.max(ci,ri,xi,yi,zi,rn,li)) continue;
+          
+          // Check if standard amino acid and no insertion code (or empty insertion code)
+          const resname = parts[rn];
+          if (!standardAAs.has(resname)) continue;
+          
+          const insCode = ic != null ? (parts[ic] || '').trim() : '';
+          if (insCode && insCode !== '?') continue; // Skip residues with insertion codes
+          
+          // Skip hydrogen atoms - use type_symbol if available, otherwise check atom name
+          const atomId = parts[li];
+          let isHydrogen = false;
+          if (ts != null && parts[ts]) {
+            // Use type_symbol if available (most reliable)
+            isHydrogen = parts[ts].trim().toUpperCase() === 'H';
+          } else {
+            // Fallback: check atom name pattern
+            // Hydrogen atoms typically: H, HA, HB, HB1, HB2, HD1, HD2, HE1, HE2, HG1, HG2, etc.
+            // Pattern: starts with 'H' and may be followed by letters or numbers
+            isHydrogen = atomId === 'H' || (atomId.length > 1 && atomId[0] === 'H' && 
+                (atomId[1] === 'A' || atomId[1] === 'B' || atomId[1] === 'D' || 
+                 atomId[1] === 'E' || atomId[1] === 'G' || atomId[1] === 'Z' || 
+                 atomId[1] === 'H' || /^\d/.test(atomId.slice(1))));
+          }
+          if (isHydrogen) continue; // Skip hydrogen atoms
+          
+          const rec={
+            chain: parts[ci],
+            resnum: Number(parts[ri]),
+            resname: resname,
+            atomId: atomId,
+            x: Number(parts[xi]), 
+            y: Number(parts[yi]), 
+            z: Number(parts[zi]),
+          };
+          if (Number.isFinite(rec.x) && Number.isFinite(rec.y) && Number.isFinite(rec.z) && 
+              !isNaN(rec.resnum)) {
+            allAtoms.push(rec);
           }
         }
       }
-      return rows; // [{chain,resnum,resname,x,y,z}]
+      return allAtoms; // [{chain,resnum,resname,atomId,x,y,z}]
     }
-    function calcContactsFromCA(caRows, chain1, chain2, cutoff){
-      const a = caRows.filter(r=>r.chain===chain1);
-      const b = caRows.filter(r=>r.chain===chain2);
+    
+    // Calculate contacts using all non-hydrogen atoms (matching Python version)
+    function calcContactsFromAtoms(allAtoms, chain1, chain2, cutoff){
+      // Group atoms by residue
+      const residues1 = {};
+      const residues2 = {};
+      
+      for(const atom of allAtoms){
+        if(atom.chain === chain1){
+          const key = `${atom.resnum}_${atom.resname}`;
+          if (!residues1[key]) residues1[key] = [];
+          residues1[key].push(atom);
+        } else if(atom.chain === chain2){
+          const key = `${atom.resnum}_${atom.resname}`;
+          if (!residues2[key]) residues2[key] = [];
+          residues2[key].push(atom);
+        }
+      }
+      
       const cutoff2 = cutoff*cutoff;
-      const edges=[];
-      for(const r1 of a){
-        for(const r2 of b){
-          const dx=r1.x-r2.x, dy=r1.y-r2.y, dz=r1.z-r2.z; const d2=dx*dx+dy*dy+dz*dz;
-          if (d2<=cutoff2){
-            const s=`${chain1}_${r1.resname}_${r1.resnum}`;
-            const t=`${chain2}_${r2.resname}_${r2.resnum}`;
-            edges.push({source:s,target:t,distance:Math.sqrt(d2)});
+      const edges = [];
+      const seenContacts = new Set(); // Avoid duplicate contacts
+      
+      // For each residue pair, check all atom pairs
+      for(const key1 in residues1){
+        const res1 = residues1[key1];
+        const [resnum1, resname1] = key1.split('_');
+        
+        for(const key2 in residues2){
+          const res2 = residues2[key2];
+          const [resnum2, resname2] = key2.split('_');
+          
+          // Check if any atom pair is within cutoff
+          let found = false;
+          let minDist = Infinity;
+          
+          for(const atom1 of res1){
+            for(const atom2 of res2){
+              const dx = atom1.x - atom2.x;
+              const dy = atom1.y - atom2.y;
+              const dz = atom1.z - atom2.z;
+              const d2 = dx*dx + dy*dy + dz*dz;
+              
+              if (d2 <= cutoff2){
+                found = true;
+                const dist = Math.sqrt(d2);
+                if (dist < minDist) minDist = dist;
+              }
+            }
+          }
+          
+          if (found){
+            const contactKey = `${chain1}_${resname1}_${resnum1}-${chain2}_${resname2}_${resnum2}`;
+            if (!seenContacts.has(contactKey)){
+              seenContacts.add(contactKey);
+              const s = `${chain1}_${resname1}_${resnum1}`;
+              const t = `${chain2}_${resname2}_${resnum2}`;
+              edges.push({source:s, target:t, distance:minDist});
+            }
           }
         }
       }
+      
       return edges;
+    }
+    
+    // Extract CA atoms for sequence extraction (backward compatibility)
+    function extractCAFromAtoms(allAtoms){
+      const caAtoms = [];
+      const seen = new Set();
+      for(const atom of allAtoms){
+        if(atom.atomId === 'CA'){
+          const key = `${atom.chain}_${atom.resnum}_${atom.resname}`;
+          if(!seen.has(key)){
+            seen.add(key);
+            caAtoms.push({
+              chain: atom.chain,
+              resnum: atom.resnum,
+              resname: atom.resname,
+              x: atom.x,
+              y: atom.y,
+              z: atom.z
+            });
+          }
+        }
+      }
+      return caAtoms;
     }
     // Chord rendering via d3 (with amino acid-based coloring)
     let currentEdges = null;
@@ -451,7 +568,7 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
     const sel2 = document.getElementById('chain2');
     const cutoffEl = document.getElementById('cutoff');
     const useWeightingEl = document.getElementById('useWeighting');
-    let cachedCIF = null; // store CA rows after parsing
+    let cachedCIF = null; // store all atoms after parsing
     
     // Re-render when distance weighting option changes
     useWeightingEl.addEventListener('change', () => {
@@ -505,8 +622,8 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
           renderChord(edges, c1, c2); 
           setStatus(`Parsed ${edges.length} edges from JSON.`);
         } else if (name.endsWith('.cif')){
-          const rows=parseCIF_CA(buf); cachedCIF=rows;
-          const chains = Array.from(new Set(rows.map(r=>r.chain)));
+          const allAtoms=parseCIF_AllAtoms(buf); cachedCIF=allAtoms;
+          const chains = Array.from(new Set(allAtoms.map(r=>r.chain)));
           chains.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; sel1.appendChild(o.cloneNode(true)); sel2.appendChild(o); });
           setStatus(`Parsed CIF: detected chains [${chains.join(', ')}]. Choose chains and click Parse & Draw.`);
         } else {
@@ -521,10 +638,10 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
         if(!cachedCIF){ setStatus('CIF not parsed.'); return; }
         const c1=sel1.value, c2=sel2.value; const cutoff=Number(cutoffEl.value)||5.0;
         if(!c1||!c2||c1===c2){ setStatus('Please choose two different chains.'); return; }
-        const edges=calcContactsFromCA(cachedCIF, c1, c2, cutoff);
+        const edges=calcContactsFromAtoms(cachedCIF, c1, c2, cutoff);
         renderChord(edges, c1, c2); 
         const interfaces = identifyInterfaces(edges);
-        let msg = `Computed ${edges.length} contacts @ cutoff ${cutoff} Å.`;
+        let msg = `Computed ${edges.length} contacts @ cutoff ${cutoff} Å (using all non-H atoms).`;
         if (interfaces.length > 0) {
           msg += ` Found ${interfaces.length} interface segment(s).`;
         }
@@ -603,5 +720,6 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
   </script>
 </body>
 </html>
+
 
 
