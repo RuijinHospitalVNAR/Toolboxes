@@ -3009,20 +3009,35 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                         number_of_strong_binding: c.strong + c.weak
                     }));
                     
-                    // Sort by number_of_strong_binding (descending)
-                    counts.sort((a, b) => b.number_of_strong_binding - a.number_of_strong_binding);
-                    
-                    // Select top N (reduce) or bottom N (enhance)
+                    // Different logic for reduce vs enhance mode:
+                    // - Reduce mode: select cores with high binding count (need to reduce immunogenicity)
+                    // - Enhance mode: select cores with low binding count (including 0, need to enhance immunogenicity)
                     const N = this.epitopesNumber || 10;
-                    const selected = (mode === 'reduce') 
-                        ? counts.slice(0, N).map(x => x.core)
-                        : counts.slice(Math.max(0, counts.length - N)).map(x => x.core);
+                    let selected = [];
+                    let selectedCoresWithZeroBinding = new Set(); // Track cores with binding count = 0 in enhance mode
+                    
+                    if (mode === 'reduce') {
+                        // Reduce mode: only consider cores with binding count > 0, sort descending, select top N
+                        const countsWithBinding = counts.filter(c => c.number_of_strong_binding > 0);
+                        countsWithBinding.sort((a, b) => b.number_of_strong_binding - a.number_of_strong_binding);
+                        selected = countsWithBinding.slice(0, N).map(x => x.core);
+                    } else {
+                        // Enhance mode: include all cores (including binding count = 0), sort ascending, select top N
+                        const sortedCounts = [...counts].sort((a, b) => a.number_of_strong_binding - b.number_of_strong_binding);
+                        selected = sortedCounts.slice(0, N).map(x => x.core);
+                        // Track which selected cores have binding count = 0 (these need to show all records)
+                        selected.forEach(core => {
+                            const coreCount = counts.find(c => c.core === core);
+                            if (coreCount && coreCount.number_of_strong_binding === 0) {
+                                selectedCoresWithZeroBinding.add(core);
+                            }
+                        });
+                    }
                     
                     // Create map for quick lookup
                     const mapCount = new Map(counts.map(x => [x.core, x.number_of_strong_binding]));
                     
-                    // Filter: only include records with strong or weak binding (rank <= 5.0)
-                    // and add binding count information
+                    // Filter records based on mode and binding status
                     return withCore
                         .filter(r => {
                             // First check if core is selected
@@ -3030,7 +3045,13 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                                 return false;
                             }
                             
-                            // Then check if this specific record has strong or weak binding
+                            // For enhance mode cores with binding count = 0, show all records (even if rank > 5.0)
+                            if (mode === 'enhance' && selectedCoresWithZeroBinding.has(r.core)) {
+                                // Include all records for these cores, even without strong/weak binding
+                                return true;
+                            }
+                            
+                            // For other cases, only include records with strong or weak binding (rank <= 5.0)
                             const rankValue = (r.rank_el != null && !isNaN(r.rank_el)) 
                                 ? parseFloat(r.rank_el) 
                                 : ((r.rank != null && !isNaN(r.rank)) ? parseFloat(r.rank) : null);
