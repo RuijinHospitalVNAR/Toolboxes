@@ -68,6 +68,11 @@
         <div class="header-text">
             <h1><i class="fas fa-toolbox"></i> Toolboxes</h1>
             <p>A collection of bioinformatics web tools</p>
+            <div class="mt-2">
+                <small class="text-light">
+                    <i class="fas fa-eye"></i> Page views — VLPIM: <span id="viewsVlpim">0</span> | Circular Contact Map: <span id="viewsCcm">0</span> | Total: <span id="viewsTotal">0</span>
+                </small>
+            </div>
         </div>
 
         <div class="card">
@@ -142,6 +147,20 @@
             </p>
         </div>
     </div>
+    <script>
+        // Aggregate page views across tools from localStorage
+        (function(){
+            try{
+                const v = parseInt(localStorage.getItem('vlpim_page_views')||'0',10);
+                const c = parseInt(localStorage.getItem('circular_contact_map_views')||'0',10);
+                const total = (isNaN(v)?0:v) + (isNaN(c)?0:c);
+                const setText = (id, val)=>{ const el=document.getElementById(id); if(el) el.textContent=(val||0).toLocaleString(); };
+                setText('viewsVlpim', v);
+                setText('viewsCcm', c);
+                setText('viewsTotal', total);
+            }catch(_){ /* ignore */ }
+        })();
+    </script>
 </body>
 </html>
 
