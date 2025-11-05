@@ -576,6 +576,8 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
       // For each edge, store color based on source node
       // Since matrix is symmetric, we need to track which direction has which color
       const edgeColorMap = new Map();
+      const connectedNodesSet = new Set(edges.flatMap(e=>[e.source,e.target]));
+      
       for(const e of edges){
         const i=index.get(e.source), j=index.get(e.target);
         if (i==null || j==null) continue;
@@ -590,10 +592,28 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
         }
       }
       
+      // Add minimal self-loop for unconnected nodes to ensure they display
+      // Use a very small value and transparent color so no visible ribbon appears
+      const unconnectedNodes = allNodes.filter(n => !connectedNodesSet.has(n));
+      for (const node of unconnectedNodes) {
+        const i = index.get(node);
+        if (i != null) {
+          // Add a tiny self-loop value to ensure node appears in chord diagram
+          matrix[i][i] = 0.001;
+          // Use transparent color so no visible ribbon is drawn
+          edgeColorMap.set(`${i}-${i}`, 'rgba(0,0,0,0)');
+        }
+      }
+      
       // Helper function to get edge color for a chord
       function getChordColor(chord) {
         const srcIdx = chord.source.index;
         const tgtIdx = chord.target.index;
+        // Check if this is a self-loop (unconnected node)
+        if (srcIdx === tgtIdx) {
+          const selfColor = edgeColorMap.get(`${srcIdx}-${srcIdx}`);
+          if (selfColor) return selfColor; // Transparent for unconnected nodes
+        }
         // Try to find color based on source node of the chord
         // Check if there's an edge from source to target
         const color1 = edgeColorMap.get(`${srcIdx}-${tgtIdx}`);
