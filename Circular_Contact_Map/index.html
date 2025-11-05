@@ -131,8 +131,6 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
                 <span><span style="display:inline-block;width:12px;height:12px;background:#FF0000;border:1px solid #ccc;"></span> Acidic (ASP, GLU)</span>
                 <span><span style="display:inline-block;width:12px;height:12px;background:#B565A7;border:1px solid #ccc;"></span> Basic (LYS, ARG, HIS)</span>
                 <span><span style="display:inline-block;width:12px;height:12px;background:#000000;border:1px solid #ccc;"></span> Cysteine (CYS)</span>
-                <span><span style="display:inline-block;width:12px;height:12px;background:#FFA500;border:1px solid #ccc;"></span> Chain 1 (unconnected)</span>
-                <span><span style="display:inline-block;width:12px;height:12px;background:#20B2AA;border:1px solid #ccc;"></span> Chain 2 (unconnected)</span>
               </div>
               <div class="mb-1"><strong>Ribbon colors:</strong> Based on source node amino acid properties</div>
               <div class="mb-1"><strong>Ribbon thickness:</strong> When "Use distance weighting" is enabled, closer contacts contribute more weight; otherwise each contact contributes equally.</div>
@@ -178,17 +176,11 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
       return null;
     }
     
-    // Get node color based on amino acid property or chain (for unconnected nodes)
-    function getNodeColor(nodeLabel, connectedNodes, chain1, chain2) {
-      if (connectedNodes.has(nodeLabel)) {
-        const resname = extractResname(nodeLabel);
-        if (resname) return getAAColor(resname);
-      }
-      // Unconnected nodes: color by chain
-      const chain = extractChain(nodeLabel);
-      if (chain === chain1) return '#FFA500'; // orange for chain1
-      if (chain === chain2) return '#20B2AA'; // teal for chain2
-      return 'rgba(0,0,0,0.4)'; // default gray
+    // Get node color based on amino acid property
+    function getNodeColor(nodeLabel) {
+      const resname = extractResname(nodeLabel);
+      if (resname) return getAAColor(resname);
+      return '#AAAAAA'; // default gray
     }
     
     // Get edge color based on source node amino acid property
@@ -456,6 +448,55 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
       }
       return caAtoms;
     }
+    // Extract residue number from node label (format: Chain_RES3_Num)
+    function extractResnum(nodeLabel) {
+      const parts = nodeLabel.split('_');
+      if (parts.length >= 3) {
+        const num = parseInt(parts[2]);
+        return isNaN(num) ? 0 : num;
+      }
+      return 0;
+    }
+    
+    // Sort and arrange nodes by chain (matching Python version)
+    // Order: chain2_nodes + other_nodes + chain1_nodes
+    function arrangeNodesByChain(allNodes, chain1, chain2) {
+      if (!chain1 || !chain2 || !allNodes || allNodes.length === 0) {
+        // Fallback: just sort by chain and residue number
+        return allNodes.sort((a, b) => {
+          const chainA = extractChain(a);
+          const chainB = extractChain(b);
+          if (chainA !== chainB) return chainA.localeCompare(chainB);
+          return extractResnum(a) - extractResnum(b);
+        });
+      }
+      
+      // Group by chain
+      const chain1Nodes = [];
+      const chain2Nodes = [];
+      const otherNodes = [];
+      
+      for (const node of allNodes) {
+        const chain = extractChain(node);
+        if (chain === chain1) {
+          chain1Nodes.push(node);
+        } else if (chain === chain2) {
+          chain2Nodes.push(node);
+        } else {
+          otherNodes.push(node);
+        }
+      }
+      
+      // Sort each group by residue number
+      const sortByResnum = (a, b) => extractResnum(a) - extractResnum(b);
+      chain1Nodes.sort(sortByResnum);
+      chain2Nodes.sort(sortByResnum);
+      otherNodes.sort(sortByResnum);
+      
+      // Return in Python version order: chain2 + other + chain1
+      return [...chain2Nodes, ...otherNodes, ...chain1Nodes];
+    }
+    
     // Chord rendering via d3 (with amino acid-based coloring)
     let currentEdges = null;
     let currentChain1 = null;
@@ -469,10 +510,15 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
       const svg = d3.select('#chordSvg');
       svg.selectAll('*').remove();
       const width=760, height=760, innerRadius= Math.min(width, height)*0.5 - 80, outerRadius=innerRadius+10;
-      const nodes = Array.from(new Set(edges.flatMap(e=>[e.source,e.target])));
-      const index = new Map(nodes.map((n,i)=>[n,i]));
-      const N = nodes.length; const matrix = Array.from({length:N},()=>Array(N).fill(0));
-      const connectedNodes = new Set(edges.flatMap(e=>[e.source,e.target]));
+      
+      // Get all nodes from edges (only connected nodes)
+      let allNodes = Array.from(new Set(edges.flatMap(e=>[e.source,e.target])));
+      
+      // Arrange nodes by chain (chain2 first, then chain1)
+      allNodes = arrangeNodesByChain(allNodes, chain1, chain2);
+      
+      const index = new Map(allNodes.map((n,i)=>[n,i]));
+      const N = allNodes.length; const matrix = Array.from({length:N},()=>Array(N).fill(0));
       
       // Distance weighting setup
       const useW = document.getElementById('useWeighting').checked;
@@ -517,7 +563,7 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
         const color2 = edgeColorMap.get(`${tgtIdx}-${srcIdx}`);
         if (color2) return color2;
         // Fallback: use color based on source node
-        return getEdgeColor(nodes[srcIdx]);
+        return getEdgeColor(allNodes[srcIdx]);
       }
       
       const chord = d3.chord().padAngle(0.02).sortSubgroups(d3.descending)(matrix);
@@ -532,7 +578,7 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
         .join('g');
       group.append('path')
         .attr('d', arc)
-        .attr('fill', d=>getNodeColor(nodes[d.index], connectedNodes, chain1, chain2))
+        .attr('fill', d=>getNodeColor(allNodes[d.index]))
         .attr('stroke', '#fff')
         .attr('stroke-width', 1);
       group.append('text')
@@ -541,7 +587,7 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
         .attr('transform', d=>`rotate(${d.angle*180/Math.PI-90}) translate(${outerRadius+6}) ${d.angle>Math.PI?"rotate(180)":''}`)
         .attr('text-anchor', d=>d.angle>Math.PI?'end':null)
         .style('font-size','9px')
-        .text(d=>nodes[d.index]);
+        .text(d=>allNodes[d.index]); // Show label for all nodes (all are connected)
 
       // Ribbons (edges) - color by source node amino acid property
       g.append('g')
