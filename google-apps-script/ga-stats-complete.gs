@@ -41,6 +41,7 @@ function doGet(e) {
   }
   
   const tool = e.parameter.tool || 'all';
+  const callback = e.parameter.callback; // JSONP callback name
   
   try {
     let result;
@@ -60,14 +61,32 @@ function doGet(e) {
       result = { views: views };
     }
     
-    return ContentService.createTextOutput(JSON.stringify(result))
-      .setMimeType(ContentService.MimeType.JSON);
+    const jsonData = JSON.stringify(result);
+    
+    // If callback is provided, return JSONP format; otherwise return JSON
+    if (callback) {
+      // Return JSONP: callbackName(data)
+      return ContentService.createTextOutput(callback + '(' + jsonData + ');')
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    } else {
+      // Return plain JSON
+      return ContentService.createTextOutput(jsonData)
+        .setMimeType(ContentService.MimeType.JSON);
+    }
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({ 
+    const errorData = JSON.stringify({ 
       error: error.toString(),
       message: 'Failed to fetch GA statistics'
-    }))
-    .setMimeType(ContentService.MimeType.JSON);
+    });
+    
+    // If callback is provided, return JSONP format; otherwise return JSON
+    if (callback) {
+      return ContentService.createTextOutput(callback + '(' + errorData + ');')
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    } else {
+      return ContentService.createTextOutput(errorData)
+        .setMimeType(ContentService.MimeType.JSON);
+    }
   }
 }
 
