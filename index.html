@@ -148,11 +148,14 @@
         </div>
     </div>
     <script>
-        // Aggregate page views across tools using CountAPI (no backend needed)
+        // Aggregate page views across tools: Use local storage by default, try CountAPI only if network allows
         (function(){
-            // CountAPI: Free counter service, no backend needed
             const namespace = 'toolboxes';
             const setText = (id, val)=>{ const el=document.getElementById(id); if(el) el.textContent=(val||0).toLocaleString(); };
+            
+            // Check if APIs were previously disabled
+            const vlpimApiDisabled = localStorage.getItem('vlpim_api_disabled') === 'true';
+            const ccmApiDisabled = localStorage.getItem('circular_contact_map_api_disabled') === 'true';
             
             // Default to local storage values
             const v = parseInt(localStorage.getItem('vlpim_page_views')||'0',10);
@@ -162,46 +165,97 @@
             setText('viewsCcm', c);
             setText('viewsTotal', total);
             
-            // Try to fetch from CountAPI (non-blocking)
+            // Skip API calls if both were disabled
+            if (vlpimApiDisabled && ccmApiDisabled) {
+                return;
+            }
+            
+            // Try to fetch from CountAPI (non-blocking, only if not disabled)
             const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Timeout')), 5000)
+                setTimeout(() => reject(new Error('Timeout')), 3000)
             );
             
-            Promise.race([
-                Promise.all([
+            const fetchPromises = [];
+            if (!vlpimApiDisabled) {
+                fetchPromises.push(
                     fetch(`https://api.countapi.xyz/get/${namespace}/vlpim`, {
                         method: 'GET',
                         mode: 'cors',
                         cache: 'no-cache'
-                    }),
+                    }).catch(() => null)
+                );
+            }
+            if (!ccmApiDisabled) {
+                fetchPromises.push(
                     fetch(`https://api.countapi.xyz/get/${namespace}/circular_contact_map`, {
                         method: 'GET',
                         mode: 'cors',
                         cache: 'no-cache'
-                    })
-                ]),
+                    }).catch(() => null)
+                );
+            }
+            
+            if (fetchPromises.length === 0) {
+                return; // Both APIs disabled, skip
+            }
+            
+            Promise.race([
+                Promise.all(fetchPromises),
                 timeoutPromise
             ]).then(async (responses) => {
-                if (responses && responses.length === 2) {
-                    const [vlpimResponse, ccmResponse] = responses;
-                    if (vlpimResponse && vlpimResponse.ok && ccmResponse && ccmResponse.ok) {
-                        const vlpimData = await vlpimResponse.json();
-                        const ccmData = await ccmResponse.json();
-                        if (vlpimData && typeof vlpimData.value === 'number' && 
-                            ccmData && typeof ccmData.value === 'number') {
-                            const vlpim = vlpimData.value;
-                            const ccm = ccmData.value;
-                            const total = vlpim + ccm;
-                            
-                            setText('viewsVlpim', vlpim);
-                            setText('viewsCcm', ccm);
-                            setText('viewsTotal', total);
+                if (responses && Array.isArray(responses)) {
+                    let vlpim = v, ccm = c;
+                    let hasUpdates = false;
+                    let responseIndex = 0;
+                    
+                    if (!vlpimApiDisabled && responses[responseIndex]) {
+                        try {
+                            const response = responses[responseIndex];
+                            if (response && response.ok) {
+                                const data = await response.json();
+                                if (data && typeof data.value === 'number') {
+                                    vlpim = data.value;
+                                    hasUpdates = true;
+                                    localStorage.removeItem('vlpim_api_disabled');
+                                }
+                            } else {
+                                localStorage.setItem('vlpim_api_disabled', 'true');
+                            }
+                        } catch (e) {
+                            localStorage.setItem('vlpim_api_disabled', 'true');
                         }
+                        responseIndex++;
+                    }
+                    
+                    if (!ccmApiDisabled && responses[responseIndex]) {
+                        try {
+                            const response = responses[responseIndex];
+                            if (response && response.ok) {
+                                const data = await response.json();
+                                if (data && typeof data.value === 'number') {
+                                    ccm = data.value;
+                                    hasUpdates = true;
+                                    localStorage.removeItem('circular_contact_map_api_disabled');
+                                }
+                            } else {
+                                localStorage.setItem('circular_contact_map_api_disabled', 'true');
+                            }
+                        } catch (e) {
+                            localStorage.setItem('circular_contact_map_api_disabled', 'true');
+                        }
+                    }
+                    
+                    if (hasUpdates) {
+                        const total = vlpim + ccm;
+                        setText('viewsVlpim', vlpim);
+                        setText('viewsCcm', ccm);
+                        setText('viewsTotal', total);
                     }
                 }
             }).catch(() => {
-                // Silent fail - keep local storage values
-                // Already set above
+                // Silent fail - disable APIs if they fail
+                if (!vlpimApiDisabled) localStorage.setItem('vlpim_api_disabled', 'true');
+                if (!ccmApiDisabled) localStorage.setItem('circular_contact_map_api_disabled', 'true');
             });
         })();
     </script>

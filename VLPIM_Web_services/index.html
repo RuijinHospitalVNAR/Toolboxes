@@ -1375,16 +1375,31 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
             },
             methods: {
                 async initPageViews() {
-                    // CountAPI: Free counter service, no backend needed
-                    // Namespace: toolboxes, Key: vlpim
-                    const namespace = 'toolboxes';
-                    const key = 'vlpim';
+                    // Page view tracking: Use local storage by default
+                    // Try CountAPI only if enabled and network allows
                     const sessionKey = 'vlpim_session';
                     const storageKey = 'vlpim_page_views';
+                    
+                    // Check if API was previously disabled due to connection issues
+                    const apiDisabled = localStorage.getItem('vlpim_api_disabled') === 'true';
                     
                     // Default to local storage value
                     const localViews = parseInt(localStorage.getItem(storageKey) || '0', 10);
                     this.pageViews = localViews;
+                    
+                    // If API was disabled, skip all API calls
+                    if (apiDisabled) {
+                        // Just use local storage, no API calls
+                        let sessionId = sessionStorage.getItem(sessionKey);
+                        if (!sessionId) {
+                            sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+                            sessionStorage.setItem(sessionKey, sessionId);
+                            const currentLocal = parseInt(localStorage.getItem(storageKey) || '0', 10);
+                            localStorage.setItem(storageKey, (currentLocal + 1).toString());
+                            this.pageViews = currentLocal + 1;
+                        }
+                        return;
+                    }
                     
                     try {
                         // Generate or retrieve session ID
@@ -1394,10 +1409,11 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                             sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
                             sessionStorage.setItem(sessionKey, sessionId);
                             
-                            // Record page view using CountAPI hit endpoint (non-blocking)
-                            // Use fetch with timeout to avoid long waits
+                            // Try CountAPI (only if not previously disabled)
+                            const namespace = 'toolboxes';
+                            const key = 'vlpim';
                             const timeoutPromise = new Promise((_, reject) => 
-                                setTimeout(() => reject(new Error('Timeout')), 5000)
+                                setTimeout(() => reject(new Error('Timeout')), 3000)
                             );
                             
                             Promise.race([
@@ -1409,39 +1425,48 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                                 timeoutPromise
                             ]).then(() => {
                                 // Successfully recorded to CountAPI
-                            }).catch(() => {
-                                // Silent fail - fallback to local storage
+                                // Mark API as working
+                                localStorage.removeItem('vlpim_api_disabled');
+                            }).catch((error) => {
+                                // API failed - disable future attempts and use local storage
+                                localStorage.setItem('vlpim_api_disabled', 'true');
                                 const currentLocal = parseInt(localStorage.getItem(storageKey) || '0', 10);
                                 localStorage.setItem(storageKey, (currentLocal + 1).toString());
                                 this.pageViews = currentLocal + 1;
                             });
-                        }
-                        
-                        // Fetch current page view count from CountAPI (non-blocking)
-                        const timeoutPromise = new Promise((_, reject) => 
-                            setTimeout(() => reject(new Error('Timeout')), 5000)
-                        );
-                        
-                        Promise.race([
-                            fetch(`https://api.countapi.xyz/get/${namespace}/${key}`, {
-                                method: 'GET',
-                                mode: 'cors',
-                                cache: 'no-cache'
-                            }),
-                            timeoutPromise
-                        ]).then(async (response) => {
-                            if (response && response.ok) {
-                                const data = await response.json();
-                                if (data && typeof data.value === 'number') {
-                                    this.pageViews = data.value;
+                        } else {
+                            // Existing session - try to fetch count from API (quick check)
+                            const namespace = 'toolboxes';
+                            const key = 'vlpim';
+                            const timeoutPromise = new Promise((_, reject) => 
+                                setTimeout(() => reject(new Error('Timeout')), 3000)
+                            );
+                            
+                            Promise.race([
+                                fetch(`https://api.countapi.xyz/get/${namespace}/${key}`, {
+                                    method: 'GET',
+                                    mode: 'cors',
+                                    cache: 'no-cache'
+                                }),
+                                timeoutPromise
+                            ]).then(async (response) => {
+                                if (response && response.ok) {
+                                    const data = await response.json();
+                                    if (data && typeof data.value === 'number') {
+                                        this.pageViews = data.value;
+                                        // Mark API as working
+                                        localStorage.removeItem('vlpim_api_disabled');
+                                    }
                                 }
-                            }
-                        }).catch(() => {
-                            // Silent fail - keep local storage value
-                            // Already set above
-                        });
+                            }).catch(() => {
+                                // API failed - disable future attempts
+                                localStorage.setItem('vlpim_api_disabled', 'true');
+                                // Keep local storage value (already set above)
+                            });
+                        }
                     } catch (e) {
-                        // Silent fail - keep default value
+                        // Silent fail - disable API for future
+                        localStorage.setItem('vlpim_api_disabled', 'true');
                     }
                 },
                 getEmbeddedText(id) {
