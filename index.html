@@ -172,8 +172,39 @@
             // Only fetch if API URL is configured
             if (GA_STATS_API && !GA_STATS_API.includes('YOUR_SCRIPT_ID')) {
                 // Use JSONP to avoid CORS issues
-                const callbackName = 'gaStatsCallback_' + Date.now();
+                const callbackName = 'gaStatsCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                let script = null;
+                let timeoutId = null;
+                let isCompleted = false;
+                
+                // Cleanup function
+                const cleanup = () => {
+                    if (timeoutId) {
+                        clearTimeout(timeoutId);
+                        timeoutId = null;
+                    }
+                    if (window[callbackName]) {
+                        delete window[callbackName];
+                    }
+                    if (script && script.parentNode) {
+                        script.parentNode.removeChild(script);
+                    }
+                };
+                
+                // Set timeout (10 seconds)
+                timeoutId = setTimeout(() => {
+                    if (!isCompleted) {
+                        isCompleted = true;
+                        cleanup();
+                        console.warn('GA stats API request timeout');
+                    }
+                }, 10000);
+                
+                // Define callback function
                 window[callbackName] = (data) => {
+                    if (isCompleted) return;
+                    isCompleted = true;
+                    
                     try {
                         if (data && !data.error) {
                             // Update with GA data
@@ -184,23 +215,26 @@
                     } catch (error) {
                         console.warn('Failed to process GA stats:', error);
                     } finally {
-                        // Clean up
-                        delete window[callbackName];
-                        if (script && script.parentNode) {
-                            script.parentNode.removeChild(script);
-                        }
+                        cleanup();
                     }
                 };
                 
-                const script = document.createElement('script');
+                // Create and load script
+                script = document.createElement('script');
                 script.src = `${GA_STATS_API}?tool=all&callback=${callbackName}`;
+                script.async = true;
                 script.onerror = () => {
-                    console.warn('Failed to fetch GA stats from API');
-                    delete window[callbackName];
-                    if (script.parentNode) {
-                        script.parentNode.removeChild(script);
+                    if (!isCompleted) {
+                        isCompleted = true;
+                        cleanup();
+                        console.warn('Failed to fetch GA stats from API');
                     }
                 };
+                script.onload = () => {
+                    // Script loaded, but callback might not have been called yet
+                    // Don't cleanup here, wait for callback or timeout
+                };
+                
                 document.head.appendChild(script);
             }
             
