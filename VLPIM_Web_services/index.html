@@ -677,9 +677,9 @@
                             <small class="text-muted">
                                 <strong>Target length:</strong> Extends core sequences to the specified length (9–15 aa) using amino acids from the VLP sequence. If core is already at or above target length, it remains unchanged.
                                 <br>
-                                <strong>Enhance mode:</strong> prioritize higher overall scores (favoring immunogenicity reduction).
+                                <strong>Reduce mode:</strong> prioritize higher overall scores (favoring immunogenicity reduction).
                                 <br>
-                                <strong>Reduce mode:</strong> prioritize lower overall scores (favoring immunogenicity enhancement).
+                                <strong>Enhance mode:</strong> prioritize lower overall scores (favoring immunogenicity enhancement).
                             </small>
                         </div>
                         
@@ -862,7 +862,7 @@
                         </div>
                         <h5 class="mt-4 text-start">Key points:</h5>
                         <ul class="mt-2 text-start">
-                            <li>Feed NetMHCIIpan outputs （immunogenicity) outputs and AlphaFold3 outputs(structure) to Step 4.1 and 4.2 for detailed analysis</li>
+                            <li>Feed NetMHCIIpan outputs (immunogenicity) outputs and AlphaFold3 outputs(structure) to Step 4.1 and 4.2 for detailed analysis</li>
                             <li>Keep inputs/outputs consistent for traceability and reproducibility</li>
                             <li><strong>NetMHCIIpan parameters:</strong> provide HLA-DRB1 allele list; interpret %Rank thresholds (strong ≤ 1.0, weak ≤ 5.0); export wide-table output</li>
                             <li><strong>AlphaFold3 parameters:</strong> set recycles/seeds; optionally use a reference for Step 4.2; retain predicted PDB/CIF for RMSD/TM-score</li>
