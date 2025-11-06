@@ -246,6 +246,9 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
             if (data && !data.error && data.views !== undefined && viewElement) {
               // Update with GA data
               viewElement.textContent = data.views.toLocaleString();
+              console.log('GA stats loaded successfully:', data.views);
+            } else if (data && data.error) {
+              console.warn('GA stats API returned error:', data.error);
             }
           } catch (error) {
             console.warn('Failed to process GA stats:', error);
@@ -254,15 +257,22 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
           }
         };
         
+        // Add debug logging
+        console.log('Loading GA stats from:', `${GA_STATS_API}?tool=circular_contact_map&callback=${callbackName}`);
+        
         // Create and load script
         script = document.createElement('script');
         script.src = `${GA_STATS_API}?tool=circular_contact_map&callback=${callbackName}`;
         script.async = true;
-        script.onerror = () => {
+        script.onerror = (error) => {
           if (!isCompleted) {
             isCompleted = true;
             cleanup();
-            console.warn('Failed to fetch GA stats from API');
+            console.warn('Failed to fetch GA stats from API:', {
+              error: error,
+              url: script.src,
+              message: 'Script failed to load. Check if Google Apps Script is deployed correctly and accessible.'
+            });
           }
         };
         script.onload = () => {
