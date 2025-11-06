@@ -948,7 +948,7 @@
                             <h4>Peptide immunogenicity scores</h4>
                             <div class="d-flex align-items-center gap-2">
                                 <select class="form-select form-select-sm" v-model="peptideSortBy" style="width:200px">
-                                    <option value="overall">Sort by S<sup>im</sup> score</option>
+                                    <option value="overall">Sort by Sⁱᵐ score</option>
                                     <option value="ic50">Sort by best IC₅₀</option>
                                     <option value="alleles">Sort by allele count</option>
                                 </select>
@@ -1382,6 +1382,10 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                     const sessionKey = 'vlpim_session';
                     const storageKey = 'vlpim_page_views';
                     
+                    // Default to local storage value
+                    const localViews = parseInt(localStorage.getItem(storageKey) || '0', 10);
+                    this.pageViews = localViews;
+                    
                     try {
                         // Generate or retrieve session ID
                         let sessionId = sessionStorage.getItem(sessionKey);
@@ -1390,36 +1394,54 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                             sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
                             sessionStorage.setItem(sessionKey, sessionId);
                             
-                            // Record page view using CountAPI hit endpoint
-                            try {
-                                // CountAPI hit endpoint: increments counter by 1
-                                await fetch(`https://api.countapi.xyz/hit/${namespace}/${key}`);
-                            } catch (apiError) {
-                                console.warn('Failed to record page view to CountAPI:', apiError);
-                                // Fallback to local storage if API fails
-                                const localViews = parseInt(localStorage.getItem(storageKey) || '0', 10);
-                                localStorage.setItem(storageKey, (localViews + 1).toString());
-                            }
+                            // Record page view using CountAPI hit endpoint (non-blocking)
+                            // Use fetch with timeout to avoid long waits
+                            const timeoutPromise = new Promise((_, reject) => 
+                                setTimeout(() => reject(new Error('Timeout')), 5000)
+                            );
+                            
+                            Promise.race([
+                                fetch(`https://api.countapi.xyz/hit/${namespace}/${key}`, {
+                                    method: 'GET',
+                                    mode: 'cors',
+                                    cache: 'no-cache'
+                                }),
+                                timeoutPromise
+                            ]).then(() => {
+                                // Successfully recorded to CountAPI
+                            }).catch(() => {
+                                // Silent fail - fallback to local storage
+                                const currentLocal = parseInt(localStorage.getItem(storageKey) || '0', 10);
+                                localStorage.setItem(storageKey, (currentLocal + 1).toString());
+                                this.pageViews = currentLocal + 1;
+                            });
                         }
                         
-                        // Fetch current page view count from CountAPI
-                        try {
-                            const response = await fetch(`https://api.countapi.xyz/get/${namespace}/${key}`);
-                            if (response.ok) {
+                        // Fetch current page view count from CountAPI (non-blocking)
+                        const timeoutPromise = new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('Timeout')), 5000)
+                        );
+                        
+                        Promise.race([
+                            fetch(`https://api.countapi.xyz/get/${namespace}/${key}`, {
+                                method: 'GET',
+                                mode: 'cors',
+                                cache: 'no-cache'
+                            }),
+                            timeoutPromise
+                        ]).then(async (response) => {
+                            if (response && response.ok) {
                                 const data = await response.json();
-                                this.pageViews = data.value || 0;
-                            } else {
-                                throw new Error('Failed to fetch stats');
+                                if (data && typeof data.value === 'number') {
+                                    this.pageViews = data.value;
+                                }
                             }
-                        } catch (fetchError) {
-                            console.warn('Failed to fetch page views from CountAPI:', fetchError);
-                            // Fallback to local storage if API fails
-                            const localViews = parseInt(localStorage.getItem(storageKey) || '0', 10);
-                            this.pageViews = localViews;
-                        }
+                        }).catch(() => {
+                            // Silent fail - keep local storage value
+                            // Already set above
+                        });
                     } catch (e) {
-                        console.warn('Page view counter initialization failed:', e);
-                        this.pageViews = 0;
+                        // Silent fail - keep default value
                     }
                 },
                 getEmbeddedText(id) {
