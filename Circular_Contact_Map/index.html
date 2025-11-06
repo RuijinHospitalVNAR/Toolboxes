@@ -24,6 +24,15 @@
   <script src="https://cdn.jsdelivr.net/npm/d3-chord@3"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <!-- Google Analytics 4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    // TODO: Replace G-XXXXXXXXXX with your actual Google Analytics 4 Measurement ID
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
 </head>
 <body>
   <div class="container container-narrow py-4">
@@ -183,101 +192,39 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
     </div>
   </div>
   <script>
-    // Page view counter: Use local storage by default, try CountAPI only if network allows
+    // Page view counter using Google Analytics + local storage
     (function() {
-      const namespace = 'toolboxes';
-      const key = 'circular_contact_map';
       const pageKey = 'circular_contact_map_views';
       const sessionKey = 'circular_contact_map_session';
-      const apiDisabledKey = 'circular_contact_map_api_disabled';
       const viewElement = document.getElementById('pageViews');
       
-      // Check if API was previously disabled due to connection issues
-      const apiDisabled = localStorage.getItem(apiDisabledKey) === 'true';
-      
-      // Default to local storage value
-      const localViews = parseInt(localStorage.getItem(pageKey) || '0', 10);
-      if (viewElement) {
-        viewElement.textContent = localViews.toLocaleString();
-      }
-      
-      // If API was disabled, skip all API calls
-      if (apiDisabled) {
-        let sessionId = sessionStorage.getItem(sessionKey);
-        if (!sessionId) {
-          sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
-          sessionStorage.setItem(sessionKey, sessionId);
-          const currentLocal = parseInt(localStorage.getItem(pageKey) || '0', 10);
-          localStorage.setItem(pageKey, (currentLocal + 1).toString());
-          if (viewElement) {
-            viewElement.textContent = (currentLocal + 1).toLocaleString();
-          }
+      // Check if this is a new session
+      let sessionId = sessionStorage.getItem(sessionKey);
+      if (!sessionId) {
+        // New session - increment view count
+        sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+        sessionStorage.setItem(sessionKey, sessionId);
+        
+        // Increment local counter
+        const currentLocal = parseInt(localStorage.getItem(pageKey) || '0', 10);
+        localStorage.setItem(pageKey, (currentLocal + 1).toString());
+        if (viewElement) {
+          viewElement.textContent = (currentLocal + 1).toLocaleString();
         }
-        return;
-      }
-      
-      try {
-        // Generate or retrieve session ID
-        let sessionId = sessionStorage.getItem(sessionKey);
-        if (!sessionId) {
-          // Generate unique session ID
-          sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
-          sessionStorage.setItem(sessionKey, sessionId);
-          
-          // Try CountAPI (only if not previously disabled)
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout')), 3000)
-          );
-          
-          Promise.race([
-            fetch(`https://api.countapi.xyz/hit/${namespace}/${key}`, {
-              method: 'GET',
-              mode: 'cors',
-              cache: 'no-cache'
-            }),
-            timeoutPromise
-          ]).then(() => {
-            // Successfully recorded to CountAPI
-            localStorage.removeItem(apiDisabledKey);
-          }).catch(() => {
-            // API failed - disable future attempts and use local storage
-            localStorage.setItem(apiDisabledKey, 'true');
-            const currentLocal = parseInt(localStorage.getItem(pageKey) || '0', 10);
-            localStorage.setItem(pageKey, (currentLocal + 1).toString());
-            if (viewElement) {
-              viewElement.textContent = (currentLocal + 1).toLocaleString();
-            }
-          });
-        } else {
-          // Existing session - try to fetch count from API (quick check)
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout')), 3000)
-          );
-          
-          Promise.race([
-            fetch(`https://api.countapi.xyz/get/${namespace}/${key}`, {
-              method: 'GET',
-              mode: 'cors',
-              cache: 'no-cache'
-            }),
-            timeoutPromise
-          ]).then(async (response) => {
-            if (response && response.ok) {
-              const data = await response.json();
-              if (data && typeof data.value === 'number' && viewElement) {
-                viewElement.textContent = data.value.toLocaleString();
-                localStorage.removeItem(apiDisabledKey);
-              }
-            }
-          }).catch(() => {
-            // API failed - disable future attempts
-            localStorage.setItem(apiDisabledKey, 'true');
-            // Keep local storage value (already set above)
+        
+        // Track page view in Google Analytics (if gtag is available)
+        if (typeof gtag !== 'undefined') {
+          gtag('event', 'page_view', {
+            'page_title': 'Circular Contact Map',
+            'page_location': window.location.href
           });
         }
-      } catch (e) {
-        // Silent fail - disable API for future
-        localStorage.setItem(apiDisabledKey, 'true');
+      } else {
+        // Existing session - just display current count
+        const localViews = parseInt(localStorage.getItem(pageKey) || '0', 10);
+        if (viewElement) {
+          viewElement.textContent = localViews.toLocaleString();
+        }
       }
     })();
   </script>

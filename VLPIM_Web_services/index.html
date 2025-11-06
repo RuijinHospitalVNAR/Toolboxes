@@ -20,6 +20,15 @@
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        // TODO: Replace G-XXXXXXXXXX with your actual Google Analytics 4 Measurement ID
+        gtag('config', 'G-XXXXXXXXXX');
+    </script>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -1374,99 +1383,35 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                 },
             },
             methods: {
-                async initPageViews() {
-                    // Page view tracking: Use local storage by default
-                    // Try CountAPI only if enabled and network allows
-                    const sessionKey = 'vlpim_session';
+                initPageViews() {
+                    // Google Analytics tracking: Page views are tracked automatically by gtag.js
+                    // Use local storage as a simple display counter
                     const storageKey = 'vlpim_page_views';
+                    const sessionKey = 'vlpim_session';
                     
-                    // Check if API was previously disabled due to connection issues
-                    const apiDisabled = localStorage.getItem('vlpim_api_disabled') === 'true';
-                    
-                    // Default to local storage value
-                    const localViews = parseInt(localStorage.getItem(storageKey) || '0', 10);
-                    this.pageViews = localViews;
-                    
-                    // If API was disabled, skip all API calls
-                    if (apiDisabled) {
-                        // Just use local storage, no API calls
-                        let sessionId = sessionStorage.getItem(sessionKey);
-                        if (!sessionId) {
-                            sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
-                            sessionStorage.setItem(sessionKey, sessionId);
-                            const currentLocal = parseInt(localStorage.getItem(storageKey) || '0', 10);
-                            localStorage.setItem(storageKey, (currentLocal + 1).toString());
-                            this.pageViews = currentLocal + 1;
-                        }
-                        return;
-                    }
-                    
-                    try {
-                        // Generate or retrieve session ID
-                        let sessionId = sessionStorage.getItem(sessionKey);
-                        if (!sessionId) {
-                            // Generate unique session ID
-                            sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
-                            sessionStorage.setItem(sessionKey, sessionId);
-                            
-                            // Try CountAPI (only if not previously disabled)
-                            const namespace = 'toolboxes';
-                            const key = 'vlpim';
-                            const timeoutPromise = new Promise((_, reject) => 
-                                setTimeout(() => reject(new Error('Timeout')), 3000)
-                            );
-                            
-                            Promise.race([
-                                fetch(`https://api.countapi.xyz/hit/${namespace}/${key}`, {
-                                    method: 'GET',
-                                    mode: 'cors',
-                                    cache: 'no-cache'
-                                }),
-                                timeoutPromise
-                            ]).then(() => {
-                                // Successfully recorded to CountAPI
-                                // Mark API as working
-                                localStorage.removeItem('vlpim_api_disabled');
-                            }).catch((error) => {
-                                // API failed - disable future attempts and use local storage
-                                localStorage.setItem('vlpim_api_disabled', 'true');
-                                const currentLocal = parseInt(localStorage.getItem(storageKey) || '0', 10);
-                                localStorage.setItem(storageKey, (currentLocal + 1).toString());
-                                this.pageViews = currentLocal + 1;
-                            });
-                        } else {
-                            // Existing session - try to fetch count from API (quick check)
-                            const namespace = 'toolboxes';
-                            const key = 'vlpim';
-                            const timeoutPromise = new Promise((_, reject) => 
-                                setTimeout(() => reject(new Error('Timeout')), 3000)
-                            );
-                            
-                            Promise.race([
-                                fetch(`https://api.countapi.xyz/get/${namespace}/${key}`, {
-                                    method: 'GET',
-                                    mode: 'cors',
-                                    cache: 'no-cache'
-                                }),
-                                timeoutPromise
-                            ]).then(async (response) => {
-                                if (response && response.ok) {
-                                    const data = await response.json();
-                                    if (data && typeof data.value === 'number') {
-                                        this.pageViews = data.value;
-                                        // Mark API as working
-                                        localStorage.removeItem('vlpim_api_disabled');
-                                    }
-                                }
-                            }).catch(() => {
-                                // API failed - disable future attempts
-                                localStorage.setItem('vlpim_api_disabled', 'true');
-                                // Keep local storage value (already set above)
+                    // Check if this is a new session
+                    let sessionId = sessionStorage.getItem(sessionKey);
+                    if (!sessionId) {
+                        // New session - increment view count
+                        sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+                        sessionStorage.setItem(sessionKey, sessionId);
+                        
+                        // Increment local counter
+                        const currentLocal = parseInt(localStorage.getItem(storageKey) || '0', 10);
+                        localStorage.setItem(storageKey, (currentLocal + 1).toString());
+                        this.pageViews = currentLocal + 1;
+                        
+                        // Track page view in Google Analytics (if gtag is available)
+                        if (typeof gtag !== 'undefined') {
+                            gtag('event', 'page_view', {
+                                'page_title': 'VLPIM Web Services',
+                                'page_location': window.location.href
                             });
                         }
-                    } catch (e) {
-                        // Silent fail - disable API for future
-                        localStorage.setItem('vlpim_api_disabled', 'true');
+                    } else {
+                        // Existing session - just display current count
+                        const localViews = parseInt(localStorage.getItem(storageKey) || '0', 10);
+                        this.pageViews = localViews;
                     }
                 },
                 getEmbeddedText(id) {
