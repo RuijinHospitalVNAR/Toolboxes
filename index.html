@@ -148,17 +148,46 @@
         </div>
     </div>
     <script>
-        // Aggregate page views across tools from localStorage
-        (function(){
+        // Aggregate page views across tools using CountAPI (no backend needed)
+        (async function(){
+            // CountAPI: Free counter service, no backend needed
+            const namespace = 'toolboxes';
+            const setText = (id, val)=>{ const el=document.getElementById(id); if(el) el.textContent=(val||0).toLocaleString(); };
+            
             try{
-                const v = parseInt(localStorage.getItem('vlpim_page_views')||'0',10);
-                const c = parseInt(localStorage.getItem('circular_contact_map_views')||'0',10);
-                const total = (isNaN(v)?0:v) + (isNaN(c)?0:c);
-                const setText = (id, val)=>{ const el=document.getElementById(id); if(el) el.textContent=(val||0).toLocaleString(); };
-                setText('viewsVlpim', v);
-                setText('viewsCcm', c);
-                setText('viewsTotal', total);
-            }catch(_){ /* ignore */ }
+                // Fetch stats from CountAPI for both tools
+                const [vlpimResponse, ccmResponse] = await Promise.all([
+                    fetch(`https://api.countapi.xyz/get/${namespace}/vlpim`),
+                    fetch(`https://api.countapi.xyz/get/${namespace}/circular_contact_map`)
+                ]);
+                
+                if (vlpimResponse.ok && ccmResponse.ok) {
+                    const vlpimData = await vlpimResponse.json();
+                    const ccmData = await ccmResponse.json();
+                    const vlpim = vlpimData.value || 0;
+                    const ccm = ccmData.value || 0;
+                    const total = vlpim + ccm;
+                    
+                    setText('viewsVlpim', vlpim);
+                    setText('viewsCcm', ccm);
+                    setText('viewsTotal', total);
+                } else {
+                    throw new Error('Failed to fetch stats');
+                }
+            } catch (error) {
+                console.warn('Failed to fetch page views from CountAPI, falling back to localStorage:', error);
+                // Fallback to localStorage if API fails
+                try {
+                    const v = parseInt(localStorage.getItem('vlpim_page_views')||'0',10);
+                    const c = parseInt(localStorage.getItem('circular_contact_map_views')||'0',10);
+                    const total = (isNaN(v)?0:v) + (isNaN(c)?0:c);
+                    setText('viewsVlpim', v);
+                    setText('viewsCcm', c);
+                    setText('viewsTotal', total);
+                } catch (localError) {
+                    // Ignore errors
+                }
+            }
         })();
     </script>
 </body>

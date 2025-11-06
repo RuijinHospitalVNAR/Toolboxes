@@ -183,31 +183,59 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
     </div>
   </div>
   <script>
-    // Page view counter
-    (function() {
+    // Page view counter using CountAPI (no backend needed)
+    (async function() {
+      // CountAPI: Free counter service, no backend needed
+      // Namespace: toolboxes, Key: circular_contact_map
+      const namespace = 'toolboxes';
+      const key = 'circular_contact_map';
       const pageKey = 'circular_contact_map_views';
       const sessionKey = 'circular_contact_map_session';
+      const viewElement = document.getElementById('pageViews');
       
-      // Check if this is a new session (not a page refresh)
-      const sessionId = sessionStorage.getItem(sessionKey);
-      if (!sessionId) {
-        // New session - increment view count
-        sessionStorage.setItem(sessionKey, Date.now().toString());
-        let views = parseInt(localStorage.getItem(pageKey) || '0', 10);
-        views += 1;
-        localStorage.setItem(pageKey, views.toString());
-        
-        // Update display
-        const viewElement = document.getElementById('pageViews');
-        if (viewElement) {
-          viewElement.textContent = views.toLocaleString();
+      try {
+        // Generate or retrieve session ID
+        let sessionId = sessionStorage.getItem(sessionKey);
+        if (!sessionId) {
+          // Generate unique session ID
+          sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+          sessionStorage.setItem(sessionKey, sessionId);
+          
+          // Record page view using CountAPI hit endpoint
+          try {
+            // CountAPI hit endpoint: increments counter by 1
+            await fetch(`https://api.countapi.xyz/hit/${namespace}/${key}`);
+          } catch (apiError) {
+            console.warn('Failed to record page view to CountAPI:', apiError);
+            // Fallback to local storage if API fails
+            const localViews = parseInt(localStorage.getItem(pageKey) || '0', 10);
+            localStorage.setItem(pageKey, (localViews + 1).toString());
+          }
         }
-      } else {
-        // Same session - just display current count
-        const views = parseInt(localStorage.getItem(pageKey) || '0', 10);
-        const viewElement = document.getElementById('pageViews');
+        
+        // Fetch current page view count from CountAPI
+        try {
+          const response = await fetch(`https://api.countapi.xyz/get/${namespace}/${key}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (viewElement) {
+              viewElement.textContent = (data.value || 0).toLocaleString();
+            }
+          } else {
+            throw new Error('Failed to fetch stats');
+          }
+        } catch (fetchError) {
+          console.warn('Failed to fetch page views from CountAPI:', fetchError);
+          // Fallback to local storage if API fails
+          const localViews = parseInt(localStorage.getItem(pageKey) || '0', 10);
+          if (viewElement) {
+            viewElement.textContent = localViews.toLocaleString();
+          }
+        }
+      } catch (e) {
+        console.warn('Page view counter initialization failed:', e);
         if (viewElement) {
-          viewElement.textContent = views.toLocaleString();
+          viewElement.textContent = '0';
         }
       }
     })();
