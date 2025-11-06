@@ -1392,30 +1392,8 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                     // Google Apps Script Web App URL for GA4 statistics
                     const GA_STATS_API = 'https://script.google.com/macros/s/AKfycbxars-R7f73vTaMMGwXpuatiS9tKJpjlTSDcQpL6fp85Rovl1Nd_0ql1yocvILmwnc/exec';
                     
-                    // Check if this is a new session
-                    let sessionId = sessionStorage.getItem(sessionKey);
-                    if (!sessionId) {
-                        // New session - increment view count
-                        sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
-                        sessionStorage.setItem(sessionKey, sessionId);
-                        
-                        // Increment local counter
-                        const currentLocal = parseInt(localStorage.getItem(storageKey) || '0', 10);
-                        localStorage.setItem(storageKey, (currentLocal + 1).toString());
-                        this.pageViews = currentLocal + 1;
-                        
-                        // Track page view in Google Analytics (if gtag is available)
-                        if (typeof gtag !== 'undefined') {
-                            gtag('event', 'page_view', {
-                                'page_title': 'VLPIM Web Services',
-                                'page_location': window.location.href
-                            });
-                        }
-                    } else {
-                        // Existing session - just display current count
-                        const localViews = parseInt(localStorage.getItem(storageKey) || '0', 10);
-                        this.pageViews = localViews;
-                    }
+                    // Do not use local storage; initialize display to 0 and rely on GA
+                    this.pageViews = 0;
                     
                     // Try to fetch from Google Analytics API using JSONP (non-blocking)
                     // Only fetch if API URL is configured

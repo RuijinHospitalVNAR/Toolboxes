@@ -163,14 +163,10 @@
             
             const setText = (id, val)=>{ const el=document.getElementById(id); if(el) el.textContent=(val||0).toLocaleString(); };
             
-            // Default to local storage values (immediate display)
-            const v = parseInt(localStorage.getItem('vlpim_page_views')||'0',10);
-            const c = parseInt(localStorage.getItem('circular_contact_map_views')||'0',10);
-            const total = (isNaN(v)?0:v) + (isNaN(c)?0:c);
-            
-            setText('viewsVlpim', v);
-            setText('viewsCcm', c);
-            setText('viewsTotal', total);
+            // Do not use local storage; show placeholders until GA data loads
+            setText('viewsVlpim', 0);
+            setText('viewsCcm', 0);
+            setText('viewsTotal', 0);
             
             // Try to fetch from Google Analytics API using JSONP (non-blocking)
             // Only fetch if API URL is configured
