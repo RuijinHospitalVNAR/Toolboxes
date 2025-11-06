@@ -948,7 +948,7 @@
                             <h4>Peptide immunogenicity scores</h4>
                             <div class="d-flex align-items-center gap-2">
                                 <select class="form-select form-select-sm" v-model="peptideSortBy" style="width:200px">
-                                    <option value="overall">Sort by overall score</option>
+                                    <option value="overall">Sort by S<sup>im</sup> score</option>
                                     <option value="ic50">Sort by best IC₅₀</option>
                                     <option value="alleles">Sort by allele count</option>
                                 </select>
@@ -993,8 +993,9 @@
                     <h5 class="mt-4">Key features:</h5>
                     <ul class="mt-3">
                         <li>Enhance and reduce modes to prioritize sequences or peptides</li>
-                        <li>Sorting by overall score, best IC₅₀, or allele count</li>
+                        <li>Sorting by S<sup>im</sup> score, best IC₅₀, or allele count</li>
                         <li>Export combined results to CSV with one click</li>
+						<li>In both enhance and reduce modes, a lower S<sup>im</sup> score corresponds to a greater change in immunogenicity, providing a standardized metric for prioritizing candidate mutations<li>
                     </ul>
 
                     <div class="alert alert-info mt-4">
