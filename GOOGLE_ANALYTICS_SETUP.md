@@ -39,27 +39,29 @@
 
 ### 5. 更新代码中的 Measurement ID
 
-在所有 HTML 文件中，将 `G-XXXXXXXXXX` 替换为您实际的 Measurement ID：
+已为不同工具配置了独立的 Measurement ID：
 
-#### 需要更新的文件：
+#### 已配置的文件：
 
 1. **`VLPIM_Web_services/index.html`** (第 24 和 30 行)
+   - Measurement ID: `G-WT1MXK5JWQ`
+   ```javascript
+   gtag('config', 'G-WT1MXK5JWQ');
+   ```
+
 2. **`Circular_Contact_Map/index.html`** (第 28 和 34 行)
+   - Measurement ID: `G-H00K0HSQWN`
+   ```javascript
+   gtag('config', 'G-H00K0HSQWN');
+   ```
+
 3. **`index.html`** (第 10 和 16 行)
+   - Measurement ID: `G-F2RPLG89BD`
+   ```javascript
+   gtag('config', 'G-F2RPLG89BD');
+   ```
 
-查找并替换：
-```javascript
-// 将这行
-gtag('config', 'G-XXXXXXXXXX');
-
-// 替换为您的实际 ID
-gtag('config', 'G-您的实际ID');
-```
-
-例如：
-```javascript
-gtag('config', 'G-ABC123XYZ789');
-```
+**注意**：每个工具使用独立的 Measurement ID 可以分别追踪不同工具的访问统计，便于独立分析。
 
 ## 验证安装
 

@@ -25,13 +25,12 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <!-- Google Analytics 4 -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-H00K0HSQWN"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    // TODO: Replace G-XXXXXXXXXX with your actual Google Analytics 4 Measurement ID
-    gtag('config', 'G-XXXXXXXXXX');
+    gtag('config', 'G-H00K0HSQWN');
   </script>
 </head>
 <body>
@@ -192,11 +191,14 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
     </div>
   </div>
   <script>
-    // Page view counter using Google Analytics + local storage
+    // Page view counter using Google Analytics API + local storage fallback
     (function() {
       const pageKey = 'circular_contact_map_views';
       const sessionKey = 'circular_contact_map_session';
       const viewElement = document.getElementById('pageViews');
+      
+      // Google Apps Script Web App URL for GA4 statistics
+      const GA_STATS_API = 'https://script.google.com/macros/s/AKfycbzQ6qwA0NqrIYUgnwJnvep2QB2nRYmU6LI8KB8wwtp3QKi6ORqscPjF3Vv2VQ-6SPi6/exec';
       
       // Check if this is a new session
       let sessionId = sessionStorage.getItem(sessionKey);
@@ -225,6 +227,23 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
         if (viewElement) {
           viewElement.textContent = localViews.toLocaleString();
         }
+      }
+      
+      // Try to fetch from Google Analytics API (non-blocking)
+      // Only fetch if API URL is configured
+      if (GA_STATS_API && !GA_STATS_API.includes('YOUR_SCRIPT_ID')) {
+        fetch(`${GA_STATS_API}?tool=circular_contact_map`)
+          .then(response => response.json())
+          .then(data => {
+            if (data && !data.error && data.views && viewElement) {
+              // Update with GA data
+              viewElement.textContent = data.views.toLocaleString();
+            }
+          })
+          .catch(error => {
+            // Silent fail - keep local storage values
+            console.warn('Failed to fetch GA stats from API:', error);
+          });
       }
     })();
   </script>

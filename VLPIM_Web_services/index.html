@@ -1389,6 +1389,9 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                     const storageKey = 'vlpim_page_views';
                     const sessionKey = 'vlpim_session';
                     
+                    // Google Apps Script Web App URL for GA4 statistics
+                    const GA_STATS_API = 'https://script.google.com/macros/s/AKfycbzQ6qwA0NqrIYUgnwJnvep2QB2nRYmU6LI8KB8wwtp3QKi6ORqscPjF3Vv2VQ-6SPi6/exec';
+                    
                     // Check if this is a new session
                     let sessionId = sessionStorage.getItem(sessionKey);
                     if (!sessionId) {
@@ -1412,6 +1415,23 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                         // Existing session - just display current count
                         const localViews = parseInt(localStorage.getItem(storageKey) || '0', 10);
                         this.pageViews = localViews;
+                    }
+                    
+                    // Try to fetch from Google Analytics API (non-blocking)
+                    // Only fetch if API URL is configured
+                    if (GA_STATS_API && !GA_STATS_API.includes('YOUR_SCRIPT_ID')) {
+                        fetch(`${GA_STATS_API}?tool=vlpim`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data && !data.error && data.views) {
+                                    // Update with GA data
+                                    this.pageViews = data.views;
+                                }
+                            })
+                            .catch(error => {
+                                // Silent fail - keep local storage values
+                                console.warn('Failed to fetch GA stats from API:', error);
+                            });
                     }
                 },
                 getEmbeddedText(id) {
