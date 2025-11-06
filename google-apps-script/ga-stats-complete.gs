@@ -61,12 +61,30 @@ function doGet(e) {
       result = { views: views };
     }
     
+    // Ensure result is always a valid object
+    if (!result || typeof result !== 'object') {
+      result = { error: 'Invalid result', views: 0 };
+    }
+    
     const jsonData = JSON.stringify(result);
     
     // If callback is provided, return JSONP format; otherwise return JSON
     if (callback) {
+      // Validate callback name to prevent XSS (allow alphanumeric, underscore, and $)
+      // Remove any characters that are not safe for JavaScript function names
+      const safeCallback = callback.replace(/[^a-zA-Z0-9_$]/g, '');
+      
+      // Only proceed if we have a valid callback name
+      if (!safeCallback || safeCallback.length === 0) {
+        // Invalid callback name, return safe error
+        return ContentService.createTextOutput('console.error("Invalid callback name");')
+          .setMimeType(ContentService.MimeType.JAVASCRIPT);
+      }
+      
       // Return JSONP: callbackName(data)
-      return ContentService.createTextOutput(callback + '(' + jsonData + ');')
+      // Wrap in try-catch to handle any potential errors
+      const jsonpOutput = safeCallback + '(' + jsonData + ');';
+      return ContentService.createTextOutput(jsonpOutput)
         .setMimeType(ContentService.MimeType.JAVASCRIPT);
     } else {
       // Return plain JSON
@@ -74,6 +92,9 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
   } catch (error) {
+    // Log error for debugging
+    console.error('doGet error:', error);
+    
     const errorData = JSON.stringify({ 
       error: error.toString(),
       message: 'Failed to fetch GA statistics'
@@ -81,8 +102,16 @@ function doGet(e) {
     
     // If callback is provided, return JSONP format; otherwise return JSON
     if (callback) {
-      return ContentService.createTextOutput(callback + '(' + errorData + ');')
-        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+      // Validate callback name
+      const safeCallback = callback.replace(/[^a-zA-Z0-9_$]/g, '');
+      if (safeCallback && safeCallback.length > 0) {
+        return ContentService.createTextOutput(safeCallback + '(' + errorData + ');')
+          .setMimeType(ContentService.MimeType.JAVASCRIPT);
+      } else {
+        // Invalid callback, return error to console
+        return ContentService.createTextOutput('console.error("Error: Invalid callback name");')
+          .setMimeType(ContentService.MimeType.JAVASCRIPT);
+      }
     } else {
       return ContentService.createTextOutput(errorData)
         .setMimeType(ContentService.MimeType.JSON);
