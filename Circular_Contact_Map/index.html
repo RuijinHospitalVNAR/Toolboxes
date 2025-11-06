@@ -237,8 +237,9 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
           }
         }, 10000);
         
-        // Define callback function
-        window[callbackName] = (data) => {
+        // Define callback function in global scope BEFORE creating script
+        // This ensures the function exists when the script loads
+        window[callbackName] = function(data) {
           if (isCompleted) return;
           isCompleted = true;
           
@@ -259,11 +260,13 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
         
         // Add debug logging
         console.log('Loading GA stats from:', `${GA_STATS_API}?tool=circular_contact_map&callback=${callbackName}`);
+        console.log('Callback function defined:', typeof window[callbackName]);
         
         // Create and load script
         script = document.createElement('script');
         script.src = `${GA_STATS_API}?tool=circular_contact_map&callback=${callbackName}`;
         script.async = true;
+        script.charset = 'utf-8';
         script.onerror = (error) => {
           if (!isCompleted) {
             isCompleted = true;

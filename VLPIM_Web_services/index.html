@@ -1428,8 +1428,9 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                             }
                         }, 10000);
                         
-                        // Define callback function
-                        window[callbackName] = (data) => {
+                        // Define callback function in global scope BEFORE creating script
+                        // This ensures the function exists when the script loads
+                        window[callbackName] = function(data) {
                             if (isCompleted) return;
                             isCompleted = true;
                             
@@ -1450,11 +1451,13 @@ Pos	Peptide	ID	Target	Core	Inverted	Score	Rank	Score_BA	nM	Rank_BA	Core	Inverted
                         
                         // Add debug logging
                         console.log('Loading GA stats from:', `${GA_STATS_API}?tool=vlpim&callback=${callbackName}`);
+                        console.log('Callback function defined:', typeof window[callbackName]);
                         
                         // Create and load script
                         script = document.createElement('script');
                         script.src = `${GA_STATS_API}?tool=vlpim&callback=${callbackName}`;
                         script.async = true;
+                        script.charset = 'utf-8';
                         script.onerror = (error) => {
                             if (!isCompleted) {
                                 isCompleted = true;
