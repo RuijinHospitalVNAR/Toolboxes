@@ -97,12 +97,10 @@
             border: 0;
         }
 
-        @media (min-width: 992px) {
-            .analytics-section {
-                margin-top: 0;
-                position: sticky;
-                top: 40px;
-            }
+        .cards-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
         }
     </style>
 </head>
@@ -113,202 +111,98 @@
             <p>A collection of bioinformatics web tools</p>
         </div>
 
-        <div class="row g-4 align-items-start main-layout">
-            <div class="col-lg-7 col-xl-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="mb-0"><i class="fas fa-dna"></i> VLPIM Web Services</h3>
-                    </div>
-                    <div class="card-body">
-                        <p class="card-text">
-                            <strong>VLPIM: A Comprehensive Tool for Immunogenicity Modulation of Virus-like Particles</strong>
-                        </p>
-                        <p class="card-text">
-                            An integrated computational workflow for modulating protein immunogenicity through epitope identification, 
-                            MHC-II binding evaluation, and structural superposition.
-                        </p>
-                        <h5 class="mt-3">Features:</h5>
-                        <ul>
-                            <li>Epitope identification using NetMHCIIpan</li>
-                            <li>Immunogenicity analysis with S<sup>im</sup> scores</li>
-                            <li>Structural superposition with RMSD and TM-align</li>
-                            <li>Interactive web interface</li>
-                        </ul>
-                        <a href="VLPIM_Web_services/" class="btn btn-tool mt-3">
-                            <i class="fas fa-external-link-alt"></i> Open Tool
-                        </a>
-                        <a href="VLPIM_Web_services/readme.html" class="btn btn-outline-light mt-3 ms-2" target="_blank">
-                            <i class="fas fa-book"></i> README
-                        </a>
-                        <a href="VLPIM_Web_services/toolset.html" class="btn btn-outline-light mt-3 ms-2" target="_blank">
-                            <i class="fas fa-tools"></i> Toolset
-                        </a>
-                        <a href="https://github.com/RuijinHospitalVNAR/Toolboxes" class="btn btn-outline-light mt-3 ms-2" target="_blank">
-                            <i class="fab fa-github"></i> View Source
-                        </a>
-                    </div>
+        <div class="cards-stack">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-dna"></i> VLPIM Web Services</h3>
                 </div>
-
-                <div class="card mt-4 mt-lg-5">
-                    <div class="card-header">
-                        <h3 class="mb-0"><i class="fas fa-circle-notch"></i> Circular Contact Map</h3>
-                    </div>
-                    <div class="card-body">
-                        <p class="card-text">
-                            <strong>Nanobody–antigen interface analysis</strong>
-                        </p>
-                        <p class="card-text">
-                            Generate circular ribbon contact maps from mmCIF or edges.csv to visualize residue–residue contacts.
-                        </p>
-                        <h5 class="mt-3">Features:</h5>
-                        <ul>
-                            <li>Contact extraction from mmCIF (two chains)</li>
-                            <li>Interactive chord diagram (HTML) or PNG export</li>
-                            <li>Simple CSV input: source,target[,distance]</li>
-                        </ul>
-                        <a href="Circular_Contact_Map/" class="btn btn-tool mt-3">
-                            <i class="fas fa-external-link-alt"></i> Open Tool
-                        </a>
-                        <a href="https://github.com/RuijinHospitalVNAR/Toolboxes" class="btn btn-outline-light mt-3 ms-2" target="_blank">
-                            <i class="fab fa-github"></i> View Source
-                        </a>
-                    </div>
-                </div>
-
-                <div class="text-center mt-5">
-                    <p class="text-white">
-                        <i class="fas fa-info-circle"></i> More tools will be added in the future
+                <div class="card-body">
+                    <p class="card-text">
+                        <strong>VLPIM: A Comprehensive Tool for Immunogenicity Modulation of Virus-like Particles</strong>
                     </p>
-                    <p class="text-white">
-                        <small>
-                            Repository: <a href="https://github.com/RuijinHospitalVNAR/Toolboxes" class="text-white" style="text-decoration: underline;">GitHub</a> | 
-                            <a href="https://github.com/RuijinHospitalVNAR/Toolboxes/issues" class="text-white" style="text-decoration: underline;">Report Issues</a>
-                        </small>
+                    <p class="card-text">
+                        An integrated computational workflow for modulating protein immunogenicity through epitope identification, 
+                        MHC-II binding evaluation, and structural superposition.
                     </p>
+                    <h5 class="mt-3">Features:</h5>
+                    <ul>
+                        <li>Epitope identification using NetMHCIIpan</li>
+                        <li>Immunogenicity analysis with S<sup>im</sup> scores</li>
+                        <li>Structural superposition with RMSD and TM-align</li>
+                        <li>Interactive web interface</li>
+                    </ul>
+                    <a href="VLPIM_Web_services/" class="btn btn-tool mt-3">
+                        <i class="fas fa-external-link-alt"></i> Open Tool
+                    </a>
+                    <a href="VLPIM_Web_services/readme.html" class="btn btn-outline-light mt-3 ms-2" target="_blank">
+                        <i class="fas fa-book"></i> README
+                    </a>
+                    <a href="VLPIM_Web_services/toolset.html" class="btn btn-outline-light mt-3 ms-2" target="_blank">
+                        <i class="fas fa-tools"></i> Toolset
+                    </a>
+                    <a href="https://github.com/RuijinHospitalVNAR/Toolboxes" class="btn btn-outline-light mt-3 ms-2" target="_blank">
+                        <i class="fab fa-github"></i> View Source
+                    </a>
                 </div>
             </div>
 
-            <div class="col-lg-5 col-xl-4">
-                <div class="analytics-section">
-                    <h2 class="text-white mb-3"><i class="fas fa-chart-pie me-2"></i>Analytics dashboard</h2>
-                    <p class="text-white-50 mb-4">Live Google Analytics 4 metrics rendered via Looker Studio. Use the embedded controls to explore visitors, traffic sources, and geographic distribution across the Toolboxes suite.</p>
-                    <div class="analytics-embed">
-                        <iframe
-                            width="100%"
-                            height="450"
-                            src="https://lookerstudio.google.com/embed/reporting/8a6ae669-2ef7-4e86-859a-de779b2ee09b/page/0meeF"
-                            frameborder="0"
-                            style="border:0"
-                            allowfullscreen
-                            loading="lazy"
-                            sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-                            title="Toolboxes analytics dashboard">
-                        </iframe>
-                    </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-circle-notch"></i> Circular Contact Map</h3>
                 </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        <strong>Nanobody–antigen interface analysis</strong>
+                    </p>
+                    <p class="card-text">
+                        Generate circular ribbon contact maps from mmCIF or edges.csv to visualize residue–residue contacts.
+                    </p>
+                    <h5 class="mt-3">Features:</h5>
+                    <ul>
+                        <li>Contact extraction from mmCIF (two chains)</li>
+                        <li>Interactive chord diagram (HTML) or PNG export</li>
+                        <li>Simple CSV input: source,target[,distance]</li>
+                    </ul>
+                    <a href="Circular_Contact_Map/" class="btn btn-tool mt-3">
+                        <i class="fas fa-external-link-alt"></i> Open Tool
+                    </a>
+                    <a href="https://github.com/RuijinHospitalVNAR/Toolboxes" class="btn btn-outline-light mt-3 ms-2" target="_blank">
+                        <i class="fab fa-github"></i> View Source
+                    </a>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <p class="text-white">
+                    <i class="fas fa-info-circle"></i> More tools will be added in the future
+                </p>
+                <p class="text-white">
+                    <small>
+                        Repository: <a href="https://github.com/RuijinHospitalVNAR/Toolboxes" class="text-white" style="text-decoration: underline;">GitHub</a> | 
+                        <a href="https://github.com/RuijinHospitalVNAR/Toolboxes/issues" class="text-white" style="text-decoration: underline;">Report Issues</a>
+                    </small>
+                </p>
+            </div>
+        </div>
+
+        <div class="analytics-section mt-4">
+            <h2 class="text-white mb-3"><i class="fas fa-chart-pie me-2"></i>Analytics dashboard</h2>
+            <p class="text-white-50 mb-4">Live Google Analytics 4 metrics rendered via Looker Studio. Use the embedded controls to explore visitors, traffic sources, and geographic distribution across the Toolboxes suite.</p>
+            <div class="analytics-embed">
+                <iframe
+                    width="100%"
+                    height="450"
+                    src="https://lookerstudio.google.com/embed/reporting/8a6ae669-2ef7-4e86-859a-de779b2ee09b/page/0meeF"
+                    frameborder="0"
+                    style="border:0"
+                    allowfullscreen
+                    loading="lazy"
+                    sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                    title="Toolboxes analytics dashboard">
+                </iframe>
             </div>
         </div>
     </div>
-    <script>
-        // Aggregate page views across tools using Google Analytics API + local storage fallback
-        (function(){
-            // Google Apps Script Web App URL for GA4 statistics
-            const GA_STATS_API = 'https://script.google.com/macros/s/AKfycbxars-R7f73vTaMMGwXpuatiS9tKJpjlTSDcQpL6fp85Rovl1Nd_0ql1yocvILmwnc/exec';
-            
-            const setText = (id, val)=>{ const el=document.getElementById(id); if(el) el.textContent=(val||0).toLocaleString(); };
-            
-            // Do not use local storage; show placeholders until GA data loads
-            setText('viewsVlpim', 0);
-            setText('viewsCcm', 0);
-            setText('viewsTotal', 0);
-            
-            // Try to fetch from Google Analytics API using JSONP (non-blocking)
-            // Only fetch if API URL is configured
-            if (GA_STATS_API && !GA_STATS_API.includes('YOUR_SCRIPT_ID')) {
-                // Use JSONP to avoid CORS issues
-                const callbackName = 'gaStatsCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                let script = null;
-                let timeoutId = null;
-                let isCompleted = false;
-                
-                // Cleanup function
-                const cleanup = () => {
-                    if (timeoutId) {
-                        clearTimeout(timeoutId);
-                        timeoutId = null;
-                    }
-                    if (window[callbackName]) {
-                        delete window[callbackName];
-                    }
-                    if (script && script.parentNode) {
-                        script.parentNode.removeChild(script);
-                    }
-                };
-                
-                // Set timeout (10 seconds)
-                timeoutId = setTimeout(() => {
-                    if (!isCompleted) {
-                        isCompleted = true;
-                        cleanup();
-                        console.warn('GA stats API request timeout');
-                    }
-                }, 10000);
-                
-                // Define callback function in global scope BEFORE creating script
-                // This ensures the function exists when the script loads
-                window[callbackName] = function(data) {
-                    if (isCompleted) return;
-                    isCompleted = true;
-                    
-                    try {
-                        if (data && !data.error) {
-                            // Update with GA data
-                            setText('viewsVlpim', data.vlpim || 0);
-                            setText('viewsCcm', data.circular_contact_map || 0);
-                            setText('viewsTotal', data.total || 0);
-                            console.log('GA stats loaded successfully:', data);
-                        } else if (data && data.error) {
-                            console.warn('GA stats API returned error:', data.error);
-                        }
-                    } catch (error) {
-                        console.warn('Failed to process GA stats:', error);
-                    } finally {
-                        cleanup();
-                    }
-                };
-                
-                // Add debug logging
-                console.log('Loading GA stats from:', `${GA_STATS_API}?tool=all&callback=${callbackName}`);
-                console.log('Callback function defined:', typeof window[callbackName]);
-                
-                // Create and load script
-                script = document.createElement('script');
-                script.src = `${GA_STATS_API}?tool=all&callback=${callbackName}`;
-                script.async = true;
-                script.charset = 'utf-8';
-                script.onerror = (error) => {
-                    if (!isCompleted) {
-                        isCompleted = true;
-                        cleanup();
-                        console.warn('Failed to fetch GA stats from API:', {
-                            error: error,
-                            url: script.src,
-                            message: 'Script failed to load. Check if Google Apps Script is deployed correctly and accessible.'
-                        });
-                    }
-                };
-                script.onload = () => {
-                    // Script loaded, but callback might not have been called yet
-                    // Don't cleanup here, wait for callback or timeout
-                };
-                
-                document.head.appendChild(script);
-            }
-            
-            // Note: Page views are tracked automatically by gtag.js
-            // Detailed statistics are available in Google Analytics dashboard
-        })();
-    </script>
 </body>
 </html>
 
