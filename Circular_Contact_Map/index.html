@@ -12,6 +12,22 @@
     .container-narrow { max-width: 960px; }
     .card { border: 1px solid #e7eaf0; box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
     code { background:#f4f4f4; padding:2px 6px; border-radius:3px; }
+    .analytics-embed {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      border: 1px solid #e7eaf0;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #f4f7fb;
+    }
+    .analytics-embed iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
   </style>
   <script defer src="https://buttons.github.io/buttons.js"></script>
   <script>
@@ -97,6 +113,26 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
           <li>Distance (optional) can control edge width; closer contacts draw thicker ribbons.</li>
           <li>Recommended distance cutoff for contacts: 4.5–5.0 Å.</li>
         </ul>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Analytics dashboard</h5>
+        <p class="text-muted">Live Google Analytics 4 metrics rendered via Looker Studio. Use the embedded controls to explore visitors, traffic sources, and geographic distribution.</p>
+        <div class="analytics-embed mt-3">
+          <iframe
+            width="600"
+            height="450"
+            src="https://lookerstudio.google.com/embed/reporting/8a6ae669-2ef7-4e86-859a-de779b2ee09b/page/0meeF"
+            frameborder="0"
+            style="border:0"
+            allowfullscreen
+            loading="lazy"
+            sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+            title="Circular Contact Map analytics dashboard">
+          </iframe>
+        </div>
       </div>
     </div>
 
