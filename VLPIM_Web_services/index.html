@@ -236,7 +236,7 @@
         .analytics-embed {
             position: relative;
             width: 100%;
-            padding-top: 56.25%;
+            height: 420px;
             border: 1px solid var(--border-color);
             border-radius: 12px;
             overflow: hidden;
@@ -270,7 +270,7 @@
 
         @media (min-width: 1200px) {
             .main-layout {
-                grid-template-columns: 2fr 1fr;
+                grid-template-columns: minmax(0, 2.4fr) minmax(320px, 1fr);
                 align-items: start;
             }
             .analytics-column {
