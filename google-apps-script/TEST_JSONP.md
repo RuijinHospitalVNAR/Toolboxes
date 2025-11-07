@@ -9,7 +9,7 @@
 在浏览器地址栏中访问以下 URL（替换 `testCallback` 为任意名称）：
 
 ```
-https://script.google.com/macros/s/AKfycbxars-R7f73vTaMMGwXpuatiS9tKJpjlTSDcQpL6fp85Rovl1Nd_0ql1yocvILmwnc/exec?tool=vlpim&callback=testCallback
+https://script.google.com/macros/s/AKfycbzQ6qwA0NqrIYUgnwJnvep2QB2nRYmU6LI8KB8wwtp3QKi6ORqscPjF3Vv2VQ-6SPi6/exec?tool=vlpim&callback=testCallback
 ```
 
 **预期结果**：
@@ -32,7 +32,7 @@ window.testCallback = function(data) {
 
 // 创建脚本标签
 const script = document.createElement('script');
-script.src = 'https://script.google.com/macros/s/AKfycbxars-R7f73vTaMMGwXpuatiS9tKJpjlTSDcQpL6fp85Rovl1Nd_0ql1yocvILmwnc/exec?tool=vlpim&callback=testCallback';
+script.src = 'https://script.google.com/macros/s/AKfycbzQ6qwA0NqrIYUgnwJnvep2QB2nRYmU6LI8KB8wwtp3QKi6ORqscPjF3Vv2VQ-6SPi6/exec?tool=vlpim&callback=testCallback';
 script.onload = () => {
     console.log('✅ Script loaded successfully');
 };
