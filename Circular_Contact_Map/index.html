@@ -35,14 +35,10 @@
       gap: 24px;
     }
 
-    @media (min-width: 1200px) {
+    @media (min-width: 992px) {
       .main-layout {
-        grid-template-columns: 2fr 1fr;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
         align-items: start;
-      }
-      .analytics-column {
-        position: sticky;
-        top: 40px;
       }
     }
   </style>
@@ -97,45 +93,6 @@
           </div>
         </div>
 
-        <div class="card mb-3">
-          <div class="card-body">
-            <h5 class="card-title">Download</h5>
-            <p class="card-text">Run locally with Python. Requires <code>pandas</code>, <code>holoviews[bokeh]</code>, <code>biopython</code>.</p>
-            <button class="btn btn-primary" onclick="downloadScript()"><i class="fas fa-download"></i> Download Python script</button>
-            <a class="btn btn-outline-secondary ms-2" target="_blank" href="../scripts/circular_ribbon_contact_map.py"><i class="fas fa-file-code"></i> View source</a>
-            <p class="small text-muted mt-2">File: <code>scripts/circular_ribbon_contact_map.py</code></p>
-          </div>
-        </div>
-
-        <div class="card mb-3">
-          <div class="card-body">
-            <h5 class="card-title">Quick start</h5>
-            <p class="mb-1 fw-bold">Install dependencies</p>
-            <pre class="mb-3"><code>pip install pandas holoviews bokeh biopython matplotlib</code></pre>
-            <p class="mb-1 fw-bold">A) From mmCIF (recommended)</p>
-            <pre class="mb-3"><code>python scripts/circular_ribbon_contact_map.py --cif complex.cif --chain1 H --chain2 L --cutoff 5.0 --output H_L_contact_map.html</code></pre>
-            <ul>
-              <li>Outputs sequences (FASTA), contact pairs (CSV), and an HTML plot (interactive).</li>
-              <li>Use <code>--output &lt;file.png&gt;</code> to render PNG (requires bokeh + selenium + pillow).</li>
-            </ul>
-            <p class="mb-1 fw-bold">B) From edges.csv</p>
-            <pre class="mb-0"><code># edges.csv columns: source,target[,distance]
-python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.html</code></pre>
-          </div>
-        </div>
-
-        <div class="card mb-3">
-          <div class="card-body">
-            <h5 class="card-title">Tips</h5>
-            <ul class="mb-0">
-              <li>Residue node naming format: <code>Chain_RES3_Num</code> (e.g., <code>A_ARG_100</code>).</li>
-              <li>Distance (optional) can control edge width; closer contacts draw thicker ribbons.</li>
-              <li>Recommended distance cutoff for contacts: 4.5–5.0 Å.</li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- Web App: upload & draw chord -->
         <div class="card mb-3">
           <div class="card-body">
             <h5 class="card-title">Web app (no backend) — Upload and draw</h5>
@@ -220,26 +177,65 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
             </div>
           </div>
         </div>
+
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Download</h5>
+            <p class="card-text">Run locally with Python. Requires <code>pandas</code>, <code>holoviews[bokeh]</code>, <code>biopython</code>.</p>
+            <button class="btn btn-primary" onclick="downloadScript()"><i class="fas fa-download"></i> Download Python script</button>
+            <a class="btn btn-outline-secondary ms-2" target="_blank" href="../scripts/circular_ribbon_contact_map.py"><i class="fas fa-file-code"></i> View source</a>
+            <p class="small text-muted mt-2">File: <code>scripts/circular_ribbon_contact_map.py</code></p>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Quick start</h5>
+            <p class="mb-1 fw-bold">Install dependencies</p>
+            <pre class="mb-3"><code>pip install pandas holoviews bokeh biopython matplotlib</code></pre>
+            <p class="mb-1 fw-bold">A) From mmCIF (recommended)</p>
+            <pre class="mb-3"><code>python scripts/circular_ribbon_contact_map.py --cif complex.cif --chain1 H --chain2 L --cutoff 5.0 --output H_L_contact_map.html</code></pre>
+            <ul>
+              <li>Outputs sequences (FASTA), contact pairs (CSV), and an HTML plot (interactive).</li>
+              <li>Use <code>--output &lt;file.png&gt;</code> to render PNG (requires bokeh + selenium + pillow).</li>
+            </ul>
+            <p class="mb-1 fw-bold">B) From edges.csv</p>
+            <pre class="mb-0"><code># edges.csv columns: source,target[,distance]
+python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.html</code></pre>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Tips</h5>
+            <ul class="mb-0">
+              <li>Residue node naming format: <code>Chain_RES3_Num</code> (e.g., <code>A_ARG_100</code>).</li>
+              <li>Distance (optional) can control edge width; closer contacts draw thicker ribbons.</li>
+              <li>Recommended distance cutoff for contacts: 4.5–5.0 Å.</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
-    </div>
-
-    <div class="card mb-3">
-      <div class="card-body">
-        <h5 class="card-title">Analytics dashboard</h5>
-        <p class="text-muted">Live Google Analytics 4 metrics rendered via Looker Studio. Use the embedded controls to explore visitors, traffic sources, and geographic distribution.</p>
-        <div class="analytics-embed mt-3">
-          <iframe
-            width="600"
-            height="450"
-            src="https://lookerstudio.google.com/embed/reporting/8a6ae669-2ef7-4e86-859a-de779b2ee09b/page/0meeF"
-            frameborder="0"
-            style="border:0"
-            allowfullscreen
-            loading="lazy"
-            sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-            title="Circular Contact Map analytics dashboard">
-          </iframe>
+      <div class="secondary-column">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Analytics dashboard</h5>
+            <p class="text-muted">Live Google Analytics 4 metrics rendered via Looker Studio. Use the embedded controls to explore visitors, traffic sources, and geographic distribution.</p>
+            <div class="analytics-embed mt-3">
+              <iframe
+                width="600"
+                height="450"
+                src="https://lookerstudio.google.com/embed/reporting/8a6ae669-2ef7-4e86-859a-de779b2ee09b/page/0meeF"
+                frameborder="0"
+                style="border:0"
+                allowfullscreen
+                loading="lazy"
+                sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                title="Circular Contact Map analytics dashboard">
+              </iframe>
+            </div>
+          </div>
         </div>
       </div>
     </div>
