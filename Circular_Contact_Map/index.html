@@ -28,6 +28,23 @@
       height: 100%;
       border: 0;
     }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    @media (min-width: 1200px) {
+      .main-layout {
+        grid-template-columns: 2fr 1fr;
+        align-items: start;
+      }
+      .analytics-column {
+        position: sticky;
+        top: 40px;
+      }
+    }
   </style>
   <script defer src="https://buttons.github.io/buttons.js"></script>
   <script>
@@ -63,163 +80,169 @@
       </div>
     </div>
 
-    <div class="card mb-3">
-      <div class="card-body">
-        <h5 class="card-title">What is this tool?</h5>
-        <p class="card-text">
-          This tool helps you generate a <strong>circular ribbon contact map</strong> to visualize
-          residue–residue contacts between two protein chains (e.g., nanobody and antigen).
-          It supports two workflows:
-        </p>
-        <ol>
-          <li><strong>From mmCIF</strong>: extract sequences and contacts for two chains, then plot.</li>
-          <li><strong>From edges.csv</strong>: directly plot from a Cytoscape-like <code>edges.csv</code> (source,target[,distance]).</li>
-        </ol>
-      </div>
-    </div>
+    <div class="main-layout">
+      <div class="primary-column">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">What is this tool?</h5>
+            <p class="card-text">
+              This tool helps you generate a <strong>circular ribbon contact map</strong> to visualize
+              residue–residue contacts between two protein chains (e.g., nanobody and antigen).
+              It supports two workflows:
+            </p>
+            <ol>
+              <li><strong>From mmCIF</strong>: extract sequences and contacts for two chains, then plot.</li>
+              <li><strong>From edges.csv</strong>: directly plot from a Cytoscape-like <code>edges.csv</code> (source,target[,distance]).</li>
+            </ol>
+          </div>
+        </div>
 
-    <div class="card mb-3">
-      <div class="card-body">
-        <h5 class="card-title">Download</h5>
-        <p class="card-text">Run locally with Python. Requires <code>pandas</code>, <code>holoviews[bokeh]</code>, <code>biopython</code>.</p>
-        <button class="btn btn-primary" onclick="downloadScript()"><i class="fas fa-download"></i> Download Python script</button>
-        <a class="btn btn-outline-secondary ms-2" target="_blank" href="../scripts/circular_ribbon_contact_map.py"><i class="fas fa-file-code"></i> View source</a>
-        <p class="small text-muted mt-2">File: <code>scripts/circular_ribbon_contact_map.py</code></p>
-      </div>
-    </div>
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Download</h5>
+            <p class="card-text">Run locally with Python. Requires <code>pandas</code>, <code>holoviews[bokeh]</code>, <code>biopython</code>.</p>
+            <button class="btn btn-primary" onclick="downloadScript()"><i class="fas fa-download"></i> Download Python script</button>
+            <a class="btn btn-outline-secondary ms-2" target="_blank" href="../scripts/circular_ribbon_contact_map.py"><i class="fas fa-file-code"></i> View source</a>
+            <p class="small text-muted mt-2">File: <code>scripts/circular_ribbon_contact_map.py</code></p>
+          </div>
+        </div>
 
-    <div class="card mb-3">
-      <div class="card-body">
-        <h5 class="card-title">Quick start</h5>
-        <p class="mb-1 fw-bold">Install dependencies</p>
-        <pre class="mb-3"><code>pip install pandas holoviews bokeh biopython matplotlib</code></pre>
-        <p class="mb-1 fw-bold">A) From mmCIF (recommended)</p>
-        <pre class="mb-3"><code>python scripts/circular_ribbon_contact_map.py --cif complex.cif --chain1 H --chain2 L --cutoff 5.0 --output H_L_contact_map.html</code></pre>
-        <ul>
-          <li>Outputs sequences (FASTA), contact pairs (CSV), and an HTML plot (interactive).</li>
-          <li>Use <code>--output &lt;file.png&gt;</code> to render PNG (requires bokeh + selenium + pillow).</li>
-        </ul>
-        <p class="mb-1 fw-bold">B) From edges.csv</p>
-        <pre class="mb-0"><code># edges.csv columns: source,target[,distance]
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Quick start</h5>
+            <p class="mb-1 fw-bold">Install dependencies</p>
+            <pre class="mb-3"><code>pip install pandas holoviews bokeh biopython matplotlib</code></pre>
+            <p class="mb-1 fw-bold">A) From mmCIF (recommended)</p>
+            <pre class="mb-3"><code>python scripts/circular_ribbon_contact_map.py --cif complex.cif --chain1 H --chain2 L --cutoff 5.0 --output H_L_contact_map.html</code></pre>
+            <ul>
+              <li>Outputs sequences (FASTA), contact pairs (CSV), and an HTML plot (interactive).</li>
+              <li>Use <code>--output &lt;file.png&gt;</code> to render PNG (requires bokeh + selenium + pillow).</li>
+            </ul>
+            <p class="mb-1 fw-bold">B) From edges.csv</p>
+            <pre class="mb-0"><code># edges.csv columns: source,target[,distance]
 python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.html</code></pre>
-      </div>
-    </div>
-
-    <div class="card mb-3">
-      <div class="card-body">
-        <h5 class="card-title">Tips</h5>
-        <ul class="mb-0">
-          <li>Residue node naming format: <code>Chain_RES3_Num</code> (e.g., <code>A_ARG_100</code>).</li>
-          <li>Distance (optional) can control edge width; closer contacts draw thicker ribbons.</li>
-          <li>Recommended distance cutoff for contacts: 4.5–5.0 Å.</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="card mb-3">
-      <div class="card-body">
-        <h5 class="card-title">Analytics dashboard</h5>
-        <p class="text-muted">Live Google Analytics 4 metrics rendered via Looker Studio. Use the embedded controls to explore visitors, traffic sources, and geographic distribution.</p>
-        <div class="analytics-embed mt-3">
-          <iframe
-            width="600"
-            height="450"
-            src="https://lookerstudio.google.com/embed/reporting/8a6ae669-2ef7-4e86-859a-de779b2ee09b/page/0meeF"
-            frameborder="0"
-            style="border:0"
-            allowfullscreen
-            loading="lazy"
-            sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-            title="Circular Contact Map analytics dashboard">
-          </iframe>
-        </div>
-      </div>
-    </div>
-
-    <!-- Web App: upload & draw chord -->
-    <div class="card mb-3">
-      <div class="card-body">
-        <h5 class="card-title">Web app (no backend) — Upload and draw</h5>
-        <p class="text-muted">Upload one of the following: <code>edges.csv</code>, <code>edges.json</code>, or <code>.cif</code>. For CIF, choose two chains and cutoff.</p>
-        <div class="row g-3 align-items-end">
-          <div class="col-md-6">
-            <label class="form-label">Upload file (csv/json/cif)</label>
-            <input id="fileInput" type="file" class="form-control" accept=".csv,.json,.cif" />
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">Chain 1</label>
-            <select id="chain1" class="form-select"></select>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">Chain 2</label>
-            <select id="chain2" class="form-select"></select>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">Cutoff (Å)</label>
-            <input id="cutoff" type="number" class="form-control" value="5.0" min="3.0" max="10.0" step="0.1" />
-          </div>
-          <div class="col-md-12">
-            <div class="form-check mt-2">
-              <input class="form-check-input" type="checkbox" value="" id="useWeighting" />
-              <label class="form-check-label" for="useWeighting">
-                Use distance weighting (closer contacts → thicker ribbons)
-              </label>
-            </div>
-            <div class="form-check mt-2">
-              <input class="form-check-input" type="checkbox" value="" id="showUnconnected" checked />
-              <label class="form-check-label" for="showUnconnected">
-                Show unconnected nodes (hide by setting node width to 0 or making transparent)
-              </label>
-            </div>
           </div>
         </div>
-        <div class="mt-3">
-          <button id="btnParse" class="btn btn-primary"><i class="fas fa-play"></i> Parse & Draw</button>
-          <button id="btnExport" class="btn btn-outline-success ms-2" style="display:none;"><i class="fas fa-download"></i> Export Sequences & Contacts</button>
-          <div class="btn-group ms-2" id="btnExportImage" style="display:none;">
-            <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="exportImageBtn">
-              <i class="fas fa-image"></i> Export Image
-            </button>
-            <ul class="dropdown-menu" id="exportImageMenu">
-              <li><a class="dropdown-item" href="#" data-format="png"><i class="fas fa-file-image"></i> PNG</a></li>
-              <li><a class="dropdown-item" href="#" data-format="jpg"><i class="fas fa-file-image"></i> JPG</a></li>
-              <li><a class="dropdown-item" href="#" data-format="pdf"><i class="fas fa-file-pdf"></i> PDF</a></li>
-              <li><a class="dropdown-item" href="#" data-format="svg"><i class="fas fa-file-code"></i> SVG</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="#" data-format="emf-info"><i class="fas fa-info-circle"></i> EMF (see note)</a></li>
+
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Tips</h5>
+            <ul class="mb-0">
+              <li>Residue node naming format: <code>Chain_RES3_Num</code> (e.g., <code>A_ARG_100</code>).</li>
+              <li>Distance (optional) can control edge width; closer contacts draw thicker ribbons.</li>
+              <li>Recommended distance cutoff for contacts: 4.5–5.0 Å.</li>
             </ul>
           </div>
-          <small id="status" class="text-muted ms-2"></small>
         </div>
-        <div class="mt-4" id="vizContainer">
-          <svg id="chordSvg" width="760" height="760"></svg>
-          <div class="mt-3" id="legendBox">
-            <div class="small text-muted mb-2"><i class="fas fa-info-circle"></i> <strong>Legend:</strong></div>
-            <div class="small">
-              <div class="mb-1"><strong>Node colors:</strong> Same color for all nodes in the same chain</div>
-              <div class="d-flex flex-wrap gap-2 mb-2">
-                <span><span style="display:inline-block;width:12px;height:12px;background:#FFA500;border:1px solid #ccc;"></span> Chain 1 (orange)</span>
-                <span><span style="display:inline-block;width:12px;height:12px;background:#20B2AA;border:1px solid #ccc;"></span> Chain 2 (teal)</span>
+
+        <!-- Web App: upload & draw chord -->
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Web app (no backend) — Upload and draw</h5>
+            <p class="text-muted">Upload one of the following: <code>edges.csv</code>, <code>edges.json</code>, or <code>.cif</code>. For CIF, choose two chains and cutoff.</p>
+            <div class="row g-3 align-items-end">
+              <div class="col-md-6">
+                <label class="form-label">Upload file (csv/json/cif)</label>
+                <input id="fileInput" type="file" class="form-control" accept=".csv,.json,.cif" />
               </div>
-              <div class="mb-1"><strong>Ring colors (unconnected nodes):</strong> Different from node colors, but still chain-based</div>
-              <div class="d-flex flex-wrap gap-2 mb-2">
-                <span><span style="display:inline-block;width:12px;height:12px;background:#FF6600;border:1px solid #ccc;"></span> Chain 1 ring (darker orange)</span>
-                <span><span style="display:inline-block;width:12px;height:12px;background:#006666;border:1px solid #ccc;"></span> Chain 2 ring (darker teal)</span>
+              <div class="col-md-2">
+                <label class="form-label">Chain 1</label>
+                <select id="chain1" class="form-select"></select>
               </div>
-              <div class="mb-1"><strong>Ribbon colors:</strong> Based on source node amino acid properties</div>
-              <div class="d-flex flex-wrap gap-2 mb-2">
-                <span><span style="display:inline-block;width:12px;height:12px;background:#000000;border:1px solid #ccc;"></span> Cysteine (black)</span>
-                <span><span style="display:inline-block;width:12px;height:12px;background:#FF7744;border:1px solid #ccc;"></span> Hydrophobic (orange-red)</span>
-                <span><span style="display:inline-block;width:12px;height:12px;background:#87CEFA;border:1px solid #ccc;"></span> Polar (light blue)</span>
-                <span><span style="display:inline-block;width:12px;height:12px;background:#FF0000;border:1px solid #ccc;"></span> Acidic (red)</span>
-                <span><span style="display:inline-block;width:12px;height:12px;background:#B565A7;border:1px solid #ccc;"></span> Basic (purple)</span>
-                <span><span style="display:inline-block;width:12px;height:12px;background:#AAAAAA;border:1px solid #ccc;"></span> Other (gray)</span>
+              <div class="col-md-2">
+                <label class="form-label">Chain 2</label>
+                <select id="chain2" class="form-select"></select>
               </div>
-              <div class="mb-1"><strong>Ribbon thickness:</strong> When "Use distance weighting" is enabled, closer contacts contribute more weight; otherwise each contact contributes equally.</div>
+              <div class="col-md-2">
+                <label class="form-label">Cutoff (Å)</label>
+                <input id="cutoff" type="number" class="form-control" value="5.0" min="3.0" max="10.0" step="0.1" />
+              </div>
+              <div class="col-md-12">
+                <div class="form-check mt-2">
+                  <input class="form-check-input" type="checkbox" value="" id="useWeighting" />
+                  <label class="form-check-label" for="useWeighting">
+                    Use distance weighting (closer contacts → thicker ribbons)
+                  </label>
+                </div>
+                <div class="form-check mt-2">
+                  <input class="form-check-input" type="checkbox" value="" id="showUnconnected" checked />
+                  <label class="form-check-label" for="showUnconnected">
+                    Show unconnected nodes (hide by setting node width to 0 or making transparent)
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="mt-3">
+              <button id="btnParse" class="btn btn-primary"><i class="fas fa-play"></i> Parse & Draw</button>
+              <button id="btnExport" class="btn btn-outline-success ms-2" style="display:none;"><i class="fas fa-download"></i> Export Sequences & Contacts</button>
+              <div class="btn-group ms-2" id="btnExportImage" style="display:none;">
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="exportImageBtn">
+                  <i class="fas fa-image"></i> Export Image
+                </button>
+                <ul class="dropdown-menu" id="exportImageMenu">
+                  <li><a class="dropdown-item" href="#" data-format="png"><i class="fas fa-file-image"></i> PNG</a></li>
+                  <li><a class="dropdown-item" href="#" data-format="jpg"><i class="fas fa-file-image"></i> JPG</a></li>
+                  <li><a class="dropdown-item" href="#" data-format="pdf"><i class="fas fa-file-pdf"></i> PDF</a></li>
+                  <li><a class="dropdown-item" href="#" data-format="svg"><i class="fas fa-file-code"></i> SVG</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item" href="#" data-format="emf-info"><i class="fas fa-info-circle"></i> EMF (see note)</a></li>
+                </ul>
+              </div>
+              <small id="status" class="text-muted ms-2"></small>
+            </div>
+            <div class="mt-4" id="vizContainer">
+              <svg id="chordSvg" width="760" height="760"></svg>
+              <div class="mt-3" id="legendBox">
+                <div class="small text-muted mb-2"><i class="fas fa-info-circle"></i> <strong>Legend:</strong></div>
+                <div class="small">
+                  <div class="mb-1"><strong>Node colors:</strong> Same color for all nodes in the same chain</div>
+                  <div class="d-flex flex-wrap gap-2 mb-2">
+                    <span><span style="display:inline-block;width:12px;height:12px;background:#FFA500;border:1px solid #ccc;"></span> Chain 1 (orange)</span>
+                    <span><span style="display:inline-block;width:12px;height:12px;background:#20B2AA;border:1px solid #ccc;"></span> Chain 2 (teal)</span>
+                  </div>
+                  <div class="mb-1"><strong>Ring colors (unconnected nodes):</strong> Different from node colors, but still chain-based</div>
+                  <div class="d-flex flex-wrap gap-2 mb-2">
+                    <span><span style="display:inline-block;width:12px;height:12px;background:#FF6600;border:1px solid #ccc;"></span> Chain 1 ring (darker orange)</span>
+                    <span><span style="display:inline-block;width:12px;height:12px;background:#006666;border:1px solid #ccc;"></span> Chain 2 ring (darker teal)</span>
+                  </div>
+                  <div class="mb-1"><strong>Ribbon colors:</strong> Based on source node amino acid properties</div>
+                  <div class="d-flex flex-wrap gap-2 mb-2">
+                    <span><span style="display:inline-block;width:12px;height:12px;background:#000000;border:1px solid #ccc;"></span> Cysteine (black)</span>
+                    <span><span style="display:inline-block;width:12px;height:12px;background:#FF7744;border:1px solid #ccc;"></span> Hydrophobic (orange-red)</span>
+                    <span><span style="display:inline-block;width:12px;height:12px;background:#87CEFA;border:1px solid #ccc;"></span> Polar (light blue)</span>
+                    <span><span style="display:inline-block;width:12px;height:12px;background:#FF0000;border:1px solid #ccc;"></span> Acidic (red)</span>
+                    <span><span style="display:inline-block;width:12px;height:12px;background:#B565A7;border:1px solid #ccc;"></span> Basic (purple)</span>
+                    <span><span style="display:inline-block;width:12px;height:12px;background:#AAAAAA;border:1px solid #ccc;"></span> Other (gray)</span>
+                  </div>
+                  <div class="mb-1"><strong>Ribbon thickness:</strong> When "Use distance weighting" is enabled, closer contacts contribute more weight; otherwise each contact contributes equally.</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <aside class="analytics-column">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Analytics dashboard</h5>
+            <p class="text-muted">Live Google Analytics 4 metrics rendered via Looker Studio. Use the embedded controls to explore visitors, traffic sources, and geographic distribution.</p>
+            <div class="analytics-embed mt-3">
+              <iframe
+                width="600"
+                height="450"
+                src="https://lookerstudio.google.com/embed/reporting/8a6ae669-2ef7-4e86-859a-de779b2ee09b/page/0meeF"
+                frameborder="0"
+                style="border:0"
+                allowfullscreen
+                loading="lazy"
+                sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                title="Circular Contact Map analytics dashboard">
+              </iframe>
+            </div>
+          </div>
+        </div>
+      </aside>
     </div>
 
     <div class="text-center text-muted mt-4">

@@ -258,6 +258,27 @@
             padding: 40px 20px;
         }
 
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        .analytics-column .section {
+            margin-bottom: 30px;
+        }
+
+        @media (min-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 2fr 1fr;
+                align-items: start;
+            }
+            .analytics-column {
+                position: sticky;
+                top: 100px;
+            }
+        }
+
         .section {
             background: white;
             border-radius: 10px;
@@ -603,32 +624,10 @@
 
         <!-- Main Content Container -->
         <div class="main-container">
-            <!-- Analytics Dashboard Section -->
-            <section class="section" id="analytics">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-chart-pie"></i> Analytics dashboard
-                    </h2>
-                </div>
-                <div class="section-body">
-                    <p class="text-muted">Live Google Analytics 4 metrics rendered via Looker Studio. Use the embedded controls to explore visitors, traffic sources, and geographic distribution.</p>
-                    <div class="analytics-embed mt-3">
-                        <iframe
-                            width="600"
-                            height="450"
-                            src="https://lookerstudio.google.com/embed/reporting/8a6ae669-2ef7-4e86-859a-de779b2ee09b/page/0meeF"
-                            frameborder="0"
-                            style="border:0"
-                            allowfullscreen
-                            sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-                            title="VLPIM analytics dashboard">
-                        </iframe>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Epitope Identify Section -->
-            <section class="section" id="epitope">
+            <div class="main-layout">
+                <div class="primary-column">
+                    <!-- Epitope Identify Section -->
+                    <section class="section" id="epitope">
                 <div class="section-header">
                     <h2 class="section-title">
                         <i class="fas fa-search"></i> Step 1: Epitope identify
@@ -852,8 +851,8 @@
                 </div>
             </section>
 
-            <!-- Step 2: Mutation pool generation (ProteinMPNN) -->
-            <section class="section" id="mutation">
+                    <!-- Step 2: Mutation pool generation (ProteinMPNN) -->
+                    <section class="section" id="mutation">
                 <div class="section-header">
                     <h2 class="section-title">
                         <i class="fas fa-vial"></i> Step 2: Mutation pool generation
@@ -887,8 +886,8 @@
                 </div>
             </section>
 
-            <!-- Step 3: Immunogenicity and structure prediction (NetMHCIIpan + AlphaFold3) -->
-            <section class="section" id="prediction">
+                    <!-- Step 3: Immunogenicity and structure prediction (NetMHCIIpan + AlphaFold3) -->
+                    <section class="section" id="prediction">
                 <div class="section-header">
                     <h2 class="section-title">
                         <i class="fas fa-flask"></i> Step 3: Immunogenicity and structure prediction
@@ -921,8 +920,8 @@
                 </div>
             </section>
 
-            <!-- Immunogenicity Analyze Section -->
-            <section class="section" id="analyze">
+                    <!-- Immunogenicity Analyze Section -->
+                    <section class="section" id="analyze">
                 <div class="section-header">
                     <h2 class="section-title">
                         <i class="fas fa-chart-line"></i> Step 4.1: Immunogenicity analysis
@@ -1055,8 +1054,8 @@
                 </div>
             </section>
 
-            <!-- Structural superposition Section -->
-            <section class="section" id="structure">
+                    <!-- Structural superposition Section -->
+                    <section class="section" id="structure">
                 <div class="section-header">
                     <h2 class="section-title">
                         <i class="fas fa-cube"></i> Step 4.2: Structural superposition
@@ -1171,8 +1170,8 @@
                 </div>
             </section>
 
-            <!-- Documents Section -->
-            <section class="section" id="docs">
+                    <!-- Documents Section -->
+                    <section class="section" id="docs">
                 <div class="section-header">
                     <h2 class="section-title">
                         <i class="fas fa-book"></i> Documentation
@@ -1211,8 +1210,8 @@
                 </div>
             </section>
 
-            <!-- Cite Us Section -->
-            <section class="section" id="cite">
+                    <!-- Cite Us Section -->
+                    <section class="section" id="cite">
                 <div class="section-header">
                     <h2 class="section-title">
                         <i class="fas fa-quote-left"></i> Citation
@@ -1235,7 +1234,33 @@
                         <li><strong>Rosetta</strong> - <a href="https://www.rosettacommons.org/" target="_blank">Interface analysis</a></li>
                     </ul>
                 </div>
-            </section>
+                    </section>
+                </div>
+                <aside class="analytics-column">
+                    <section class="section" id="analytics">
+                        <div class="section-header">
+                            <h2 class="section-title">
+                                <i class="fas fa-chart-pie"></i> Analytics dashboard
+                            </h2>
+                        </div>
+                        <div class="section-body">
+                            <p class="text-muted">Live Google Analytics 4 metrics rendered via Looker Studio. Use the embedded controls to explore visitors, traffic sources, and geographic distribution.</p>
+                            <div class="analytics-embed mt-3">
+                                <iframe
+                                    width="600"
+                                    height="450"
+                                    src="https://lookerstudio.google.com/embed/reporting/8a6ae669-2ef7-4e86-859a-de779b2ee09b/page/0meeF"
+                                    frameborder="0"
+                                    style="border:0"
+                                    allowfullscreen
+                                    sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                                    title="VLPIM analytics dashboard">
+                                </iframe>
+                            </div>
+                        </div>
+                    </section>
+                </aside>
+            </div>
         </div>
 
         <!-- Footer -->
