@@ -82,7 +82,11 @@
         <div class="row g-3 align-items-end">
           <div class="col-md-6">
             <label class="form-label">Upload file (csv/json/cif)</label>
-            <input id="fileInput" type="file" class="form-control" accept=".csv,.json,.cif" />
+            <div class="file-upload d-flex align-items-center gap-2">
+              <input id="fileInput" type="file" class="d-none" accept=".csv,.json,.cif" />
+              <label for="fileInput" class="btn btn-outline-primary mb-0"><i class="fas fa-file-upload"></i> Choose file</label>
+              <span id="fileName" class="text-muted">No file selected</span>
+            </div>
           </div>
           <div class="col-md-2">
             <label class="form-label">Chain 1</label>
@@ -941,6 +945,7 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
 
     // Wire UI
     const input = document.getElementById('fileInput');
+    const fileNameEl = document.getElementById('fileName');
     const sel1 = document.getElementById('chain1');
     const sel2 = document.getElementById('chain2');
     const cutoffEl = document.getElementById('cutoff');
@@ -964,8 +969,11 @@ python scripts/circular_ribbon_contact_map.py edges.csv --output contact_map.htm
     input.addEventListener('change', async (e)=>{
       setStatus(''); sel1.innerHTML=''; sel2.innerHTML=''; cachedCIF=null;
       document.getElementById('btnExport').style.display = 'none';
-      const file=e.target.files && e.target.files[0]; if(!file) return;
-      const name=file.name.toLowerCase(); const buf=await file.text();
+      const file=e.target.files && e.target.files[0];
+      fileNameEl.textContent = file ? file.name : 'No file selected';
+      const name=file ? file.name.toLowerCase() : '';
+      if(!file) return;
+      const buf=await file.text();
       try{
         if (name.endsWith('.csv')){
           const edges=parseCSV(buf); 
