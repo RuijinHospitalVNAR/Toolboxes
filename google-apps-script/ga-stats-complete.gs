@@ -15,10 +15,11 @@
 // VLPIM_Web_services: 12951176208 (G-WT1MXK5JWQ)
 // Circular_Contact_Map: 12951253362 (G-H00K0HSQWN)
 // Toolboxes (root): 12951280669 (G-F2RPLG89BD)
+// AF3 Helper: 12985993800 (G-MB21ZLYC3F)
 const PROPERTY_IDS = {
   'vlpim': '12951176208',                // VLPIM_Web_services
   'circular_contact_map': '12951253362', // Circular_Contact_Map
-  'af3_helper': '12951280669',           // AF3 Helper (shares root property)
+  'af3_helper': '12985993800',           // AF3 Helper
   'root': '12951280669'                  // Toolboxes (root)
 };
 
