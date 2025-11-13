@@ -16,15 +16,17 @@
 // Circular_Contact_Map: 12951253362 (G-H00K0HSQWN)
 // Toolboxes (root): 12951280669 (G-F2RPLG89BD)
 const PROPERTY_IDS = {
-  'vlpim': '12951176208',           // VLPIM_Web_services
+  'vlpim': '12951176208',                // VLPIM_Web_services
   'circular_contact_map': '12951253362', // Circular_Contact_Map
-  'root': '12951280669'              // Toolboxes (root)
+  'af3_helper': '12951280669',           // AF3 Helper (shares root property)
+  'root': '12951280669'                  // Toolboxes (root)
 };
 
 // Map tool names to page paths in GA4
 const PAGE_PATHS = {
   'vlpim': '/VLPIM_Web_services/',
   'circular_contact_map': '/Circular_Contact_Map/',
+  'af3_helper': '/AF3_helper/',
   'root': '/'
 };
 
@@ -51,10 +53,11 @@ function doGet(e) {
       result = {
         vlpim: getPageViews('vlpim'),
         circular_contact_map: getPageViews('circular_contact_map'),
+        af3_helper: getPageViews('af3_helper'),
         root: getPageViews('root'),
         total: 0
       };
-      result.total = result.vlpim + result.circular_contact_map + result.root;
+      result.total = result.vlpim + result.circular_contact_map + result.af3_helper + result.root;
     } else {
       // Return stats for specific tool
       const views = getPageViews(tool);

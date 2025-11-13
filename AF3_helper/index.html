@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AF3 Helper - Toolboxes</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <style>
+    body {
+      background: #f7f9fc;
+    }
+    .container-narrow {
+      max-width: 1100px;
+    }
+    .card {
+      border: 1px solid #e7eaf0;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    }
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    textarea.sequence-input {
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      min-height: 120px;
+    }
+    .analytics-embed {
+      position: relative;
+      width: 100%;
+      height: 420px;
+      border: 1px solid #e7eaf0;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #f4f7fb;
+    }
+    .analytics-embed iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+    .tab-buttons .btn {
+      min-width: 160px;
+    }
+    .tab-buttons .btn.active {
+      background-color: #2952a3;
+      border-color: #2952a3;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(41, 82, 163, 0.08);
+      color: #2952a3;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+  </style>
+  <!-- Google Analytics 4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-F2RPLG89BD"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-F2RPLG89BD');
+  </script>
+</head>
+<body>
+  <div class="container container-narrow py-4">
+    <div class="text-center mb-4">
+      <h1 class="fw-bold"><i class="fas fa-dna"></i> AF3 Helper</h1>
+      <p class="text-muted m-0">Generate AlphaFold3 input JSONs and analyze AF3 predictions directly in the browser</p>
+      <div class="mt-3 d-flex flex-wrap justify-content-center gap-2">
+        <a class="btn btn-sm btn-outline-secondary" href="https://ruijinhospitalvnar.github.io/Toolboxes/">
+          <i class="fas fa-arrow-left"></i> Back to Home
+        </a>
+        <a class="btn btn-sm btn-outline-primary" href="https://github.com/RuijinHospitalVNAR/Toolboxes/tree/main/af3/scripts" target="_blank" rel="noopener">
+          <i class="fas fa-code"></i> Browse AF3 scripts
+        </a>
+      </div>
+      <div class="mt-2">
+        <span class="pill"><i class="fas fa-chart-line"></i> <span id="pageViews">–</span> page views</span>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">What is this tool?</h5>
+        <p>
+          <strong>AF3 Helper</strong> brings two commonly used AlphaFold3 utilities to the browser so you can prototype workflows without a backend:
+        </p>
+        <ul>
+          <li><strong>JSON Generator:</strong> mirror of <code>af3_json_generator.py</code> for building AF3 input JSON files from manual sequences or FASTA files, including validation and batch conversion.</li>
+          <li><strong>Result Analyzer:</strong> browser implementation of <code>af3_analysis_tool.py</code> for summarizing pLDDT / PTM / iPTM / ranking scores from AF3 prediction folders.</li>
+        </ul>
+        <p class="mb-0 text-muted small">
+          The Python scripts remain available for automation and large-scale runs; this page offers a lightweight way to inspect and prepare small jobs online.
+        </p>
+      </div>
+    </div>
+
+    <div class="card mb-3" id="jsonGenerator">
+      <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+          <h5 class="card-title mb-0"><i class="fas fa-file-code me-2 text-primary"></i> AF3 JSON generator</h5>
+          <div class="tab-buttons btn-group">
+            <button class="btn btn-outline-primary active" data-tab="manualTab">Manual input</button>
+            <button class="btn btn-outline-primary" data-tab="fastaTab">Single FASTA</button>
+            <button class="btn btn-outline-primary" data-tab="batchTab">Batch FASTA</button>
+            <button class="btn btn-outline-primary" data-tab="validateTab">Validate JSON</button>
+          </div>
+        </div>
+
+        <div class="alert alert-info">
+          <i class="fas fa-lightbulb me-2"></i>
+          AlphaFold3 expects JSON with <code>dialect=alphafold3</code>, <code>version=1</code>, a <code>name</code>, and a list of <code>modelSeeds</code>. All sequences must contain standard amino acids (ACDEFGHIKLMNPQRSTVWY).
+        </div>
+
+        <div id="manualTab" class="tab-pane active">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Complex ID</label>
+              <input id="manualComplexId" type="text" class="form-control" value="protein_complex" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Random seeds</label>
+              <input id="manualSeeds" type="number" class="form-control" value="100" min="1" max="999" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Sequence count</label>
+              <input id="manualSeqCount" type="number" class="form-control" value="1" min="1" max="10" />
+            </div>
+          </div>
+          <p class="mt-3 mb-2 text-muted small">
+            Adjust the sequence count to initialize forms (max 10). Use the buttons to add/remove chains as needed.
+          </p>
+          <div id="manualSequenceList" class="mb-3"></div>
+          <div class="d-flex flex-wrap gap-2">
+            <button id="addManualSequence" class="btn btn-outline-primary">
+              <i class="fas fa-plus"></i> Add chain
+            </button>
+            <button id="removeManualSequence" class="btn btn-outline-secondary">
+              <i class="fas fa-minus"></i> Remove chain
+            </button>
+            <button id="generateManualJson" class="btn btn-primary ms-auto">
+              <i class="fas fa-magic"></i> Generate JSON
+            </button>
+          </div>
+          <div class="mt-3">
+            <label class="form-label">Output preview</label>
+            <textarea id="manualJsonOutput" class="form-control sequence-input" readonly></textarea>
+            <div class="d-flex justify-content-end mt-2">
+              <button id="downloadManualJson" class="btn btn-success" disabled>
+                <i class="fas fa-download"></i> Download JSON
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="fastaTab" class="tab-pane" style="display:none;">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">FASTA file</label>
+              <input id="fastaFile" type="file" class="form-control" accept=".fa,.fasta,.faa,.fas,.txt" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Complex ID</label>
+              <input id="fastaComplexId" type="text" class="form-control" value="protein_complex" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Random seeds</label>
+              <input id="fastaSeeds" type="number" class="form-control" value="100" min="1" max="999" />
+            </div>
+          </div>
+          <div class="mt-3" id="fastaPreview" style="display:none;">
+            <h6>Parsed sequences</h6>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th style="width: 120px;">Sequence ID</th>
+                    <th>Sequence</th>
+                  </tr>
+                </thead>
+                <tbody id="fastaTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="d-flex justify-content-end mt-3 gap-2">
+            <button id="generateFastaJson" class="btn btn-primary" disabled>
+              <i class="fas fa-magic"></i> Generate JSON
+            </button>
+            <button id="downloadFastaJson" class="btn btn-success" disabled>
+              <i class="fas fa-download"></i> Download JSON
+            </button>
+          </div>
+          <div class="mt-3">
+            <label class="form-label">Output preview</label>
+            <textarea id="fastaJsonOutput" class="form-control sequence-input" readonly></textarea>
+          </div>
+        </div>
+
+        <div id="batchTab" class="tab-pane" style="display:none;">
+          <div class="alert alert-secondary">
+            <i class="fas fa-folder-open me-2"></i>
+            Select multiple FASTA files. Each file produces one JSON (complex ID is taken from the filename).
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">FASTA files</label>
+              <input id="batchFastaFiles" type="file" class="form-control" accept=".fa,.fasta,.faa,.fas,.txt" multiple />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Random seeds</label>
+              <input id="batchSeeds" type="number" class="form-control" value="100" min="1" max="999" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Prefix (optional)</label>
+              <input id="batchPrefix" type="text" class="form-control" placeholder="e.g. project_" />
+            </div>
+          </div>
+          <div class="mt-3">
+            <button id="generateBatchJson" class="btn btn-primary" disabled>
+              <i class="fas fa-cogs"></i> Generate ZIP
+            </button>
+            <span id="batchStatus" class="text-muted ms-3"></span>
+          </div>
+        </div>
+
+        <div id="validateTab" class="tab-pane" style="display:none;">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-6">
+              <label class="form-label">Existing AF3 JSON</label>
+              <input id="validateJsonFile" type="file" class="form-control" accept=".json" />
+            </div>
+            <div class="col-md-3">
+              <button id="validateJsonButton" class="btn btn-primary" disabled>
+                <i class="fas fa-spell-check"></i> Validate JSON
+              </button>
+            </div>
+          </div>
+          <div class="mt-3" id="validateResult"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3" id="analysisSection">
+      <div class="card-body">
+        <h5 class="card-title"><i class="fas fa-chart-bar me-2 text-success"></i> AF3 result analyzer</h5>
+        <p class="text-muted">
+          Upload a ZIP archive containing one or more AlphaFold3 prediction folders (each folder should contain structure files and <code>summary_confidences.json</code>). The analyzer will compute the average pLDDT from <code>.cif</code>/<code>.pdb</code> and extract PTM/iPTM/ranking scores, mirroring the Python CLI.
+        </p>
+        <div class="alert alert-warning">
+          <i class="fas fa-archive me-2"></i>
+          Preparing the ZIP: right-click the AF3 output directory (the one containing per-target subfolders) and compress it. Avoid huge archives; the browser must hold everything in memory.
+        </div>
+        <div class="row g-3 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label">AF3 results ZIP</label>
+            <input id="resultsZip" type="file" class="form-control" accept=".zip" />
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Confidence fields (comma separated)</label>
+            <input id="confidenceFields" type="text" class="form-control" value="ptm,iptm,ranking_score" />
+          </div>
+          <div class="col-md-2">
+            <button id="analyzeZipButton" class="btn btn-success w-100" disabled>
+              <i class="fas fa-play"></i> Analyze
+            </button>
+          </div>
+        </div>
+        <div class="mt-3">
+          <span id="analysisStatus" class="text-muted"></span>
+        </div>
+        <div class="mt-4" id="analysisResults" style="display:none;">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">Summary table</h6>
+            <button id="downloadAnalysisCsv" class="btn btn-outline-primary btn-sm">
+              <i class="fas fa-download"></i> Download CSV
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle mb-0">
+              <thead class="table-light" id="analysisTableHead"></thead>
+              <tbody id="analysisTableBody"></tbody>
+            </table>
+          </div>
+          <div class="mt-3" id="analysisErrors" style="display:none;">
+            <div class="alert alert-secondary mb-0">
+              <strong>Warnings:</strong>
+              <ul class="mb-0" id="analysisErrorList"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Download scripts</h5>
+        <p class="mb-2">
+          Prefer running locally or in pipelines? Grab the original Python scripts used for this page.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-primary" href="../af3/scripts/af3_json_generator.py" download>
+            <i class="fas fa-download"></i> af3_json_generator.py
+          </a>
+          <a class="btn btn-primary" href="../af3/scripts/af3_analysis_tool.py" download>
+            <i class="fas fa-download"></i> af3_analysis_tool.py
+          </a>
+          <a class="btn btn-outline-secondary" href="../af3/README.md" target="_blank" rel="noopener">
+            <i class="fas fa-book-open"></i> AF3 README
+          </a>
+        </div>
+        <p class="small text-muted mt-2 mb-0">
+          Scripts located in <code>af3/scripts/</code>. Install dependencies via <code>pip install -r af3/requirements.txt</code>.
+        </p>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Quick start (CLI)</h5>
+        <p class="fw-bold mb-1">Generate AF3 JSON from FASTA</p>
+        <pre class="mb-3"><code>python af3/scripts/af3_json_generator.py --fasta sequences.fasta --output complex.json</code></pre>
+        <p class="fw-bold mb-1">Batch convert a FASTA directory</p>
+        <pre class="mb-3"><code>python af3/scripts/af3_json_generator.py --batch_input fastas/ --batch_output jsons/</code></pre>
+        <p class="fw-bold mb-1">Analyze AF3 predictions</p>
+        <pre class="mb-0"><code>python af3/scripts/af3_analysis_tool.py --input_dir ./af3_results --output_dir ./analysis</code></pre>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Tips</h5>
+        <ul class="mb-0">
+          <li>AF3 JSON <code>sequence</code> strings must contain only the 20 canonical amino acids. The validator highlights invalid characters.</li>
+          <li>When analyzing results, the page looks for <code>.cif</code> first (prioritizing filenames containing <em>model</em>), falling back to <code>.pdb</code> if needed.</li>
+          <li>Large archives may take noticeable time to parse. If the browser becomes unresponsive, analyze fewer samples at once or switch to the Python CLI.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Analytics dashboard</h5>
+        <p class="text-muted mb-3">
+          Live Google Analytics 4 metrics rendered via Looker Studio. Use the embedded controls to explore visitor behaviour for the Toolboxes suite.
+        </p>
+        <div class="analytics-embed">
+          <iframe
+            width="100%"
+            height="450"
+            src="https://lookerstudio.google.com/embed/reporting/8a6ae669-2ef7-4e86-859a-de779b2ee09b/page/0meeF"
+            frameborder="0"
+            style="border:0"
+            allowfullscreen
+            loading="lazy"
+            sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+            title="Toolboxes analytics dashboard">
+          </iframe>
+        </div>
+      </div>
+    </div>
+
+    <footer class="text-center text-muted py-4">
+      <div class="small">
+        &copy; 2025 Toolboxes • MIT License • Built for AlphaFold3 power users
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const GA_STATS_API = 'https://script.google.com/macros/s/AKfycbxars-R7f73vTaMMGwXpuatiS9tKJpjlTSDcQpL6fp85Rovl1Nd_0ql1yocvILmwnc/exec';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initTabs();
+      initManualSequences();
+      initFastaGenerator();
+      initBatchGenerator();
+      initValidator();
+      initAnalysis();
+      initPageViews();
+    });
+
+    function initTabs() {
+      const buttons = document.querySelectorAll('.tab-buttons .btn');
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          buttons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const target = btn.getAttribute('data-tab');
+          document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.style.display = pane.id === target ? '' : 'none';
+          });
+        });
+      });
+    }
+
+    function initManualSequences() {
+      const countInput = document.getElementById('manualSeqCount');
+      const addBtn = document.getElementById('addManualSequence');
+      const removeBtn = document.getElementById('removeManualSequence');
+      const generateBtn = document.getElementById('generateManualJson');
+      const downloadBtn = document.getElementById('downloadManualJson');
+
+      function renderManualList() {
+        const container = document.getElementById('manualSequenceList');
+        const count = Math.max(1, Math.min(10, Number(countInput.value) || 1));
+        container.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+          const chainId = String.fromCharCode(65 + i);
+          const wrapper = document.createElement('div');
+          wrapper.className = 'card mb-2';
+          wrapper.innerHTML = `
+            <div class="card-body">
+              <div class="row g-3 align-items-start">
+                <div class="col-md-3">
+                  <label class="form-label">Sequence ID</label>
+                  <input type="text" class="form-control manual-seq-id" value="chain_${chainId}" data-index="${i}">
+                </div>
+                <div class="col-md-9">
+                  <label class="form-label">Sequence</label>
+                  <textarea class="form-control sequence-input manual-seq-text" data-index="${i}" placeholder="Enter amino acid sequence (ACDEFGHIKLMNPQRSTVWY only)"></textarea>
+                </div>
+              </div>
+            </div>
+          `;
+          container.appendChild(wrapper);
+        }
+      }
+
+      countInput.addEventListener('change', renderManualList);
+      addBtn.addEventListener('click', () => {
+        countInput.value = Math.min(10, Number(countInput.value) + 1);
+        renderManualList();
+      });
+      removeBtn.addEventListener('click', () => {
+        countInput.value = Math.max(1, Number(countInput.value) - 1);
+        renderManualList();
+      });
+
+      renderManualList();
+
+      generateBtn.addEventListener('click', () => {
+        const complexId = (document.getElementById('manualComplexId').value || 'protein_complex').trim();
+        const seedCount = clampNumber(Number(document.getElementById('manualSeeds').value) || 100, 1, 999);
+        const ids = Array.from(document.querySelectorAll('.manual-seq-id')).map(input => (input.value || '').trim());
+        const sequences = Array.from(document.querySelectorAll('.manual-seq-text')).map(textarea => (textarea.value || '').trim());
+        const errors = [];
+
+        const uniqueIds = new Set();
+        ids.forEach((id, idx) => {
+          if (!id) {
+            errors.push(\`Chain \${idx + 1}: sequence ID is required\`);
+          } else if (uniqueIds.has(id)) {
+            errors.push(\`Duplicate sequence ID: \${id}\`);
+          }
+          uniqueIds.add(id);
+        });
+
+        sequences.forEach((seq, idx) => {
+          if (!seq) {
+            errors.push(\`Chain \${idx + 1}: sequence is empty\`);
+          } else if (!validateAminoAcids(seq)) {
+            errors.push(\`Chain \${idx + 1}: invalid characters detected\`);
+          }
+        });
+
+        if (errors.length) {
+          alert('Validation failed:\\n' + errors.join('\\n'));
+          return;
+        }
+
+        const payload = createAf3JsonPayload(complexId, ids, sequences, seedCount);
+        const jsonText = JSON.stringify(payload, null, 2);
+        const output = document.getElementById('manualJsonOutput');
+        output.value = jsonText;
+        downloadBtn.disabled = false;
+        downloadBtn.onclick = () => {
+          downloadText(jsonText, \`\${complexId || 'af3_input'}.json\`);
+        };
+      });
+    }
+
+    function initFastaGenerator() {
+      const fileInput = document.getElementById('fastaFile');
+      const generateBtn = document.getElementById('generateFastaJson');
+      const downloadBtn = document.getElementById('downloadFastaJson');
+      let parsedSequences = [];
+
+      fileInput.addEventListener('change', async (e) => {
+        parsedSequences = [];
+        const file = e.target.files && e.target.files[0];
+        generateBtn.disabled = true;
+        downloadBtn.disabled = true;
+        document.getElementById('fastaJsonOutput').value = '';
+        document.getElementById('fastaPreview').style.display = 'none';
+        document.getElementById('fastaTableBody').innerHTML = '';
+
+        if (!file) return;
+        try {
+          const text = await file.text();
+          parsedSequences = parseFasta(text);
+          if (!parsedSequences.length) {
+            alert('No sequences found in FASTA file.');
+            return;
+          }
+          const tbody = document.getElementById('fastaTableBody');
+          tbody.innerHTML = '';
+          parsedSequences.forEach((item, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = \`
+              <td>
+                <input type="text" class="form-control form-control-sm fasta-seq-id" data-index="\${index}" value="\${item.id}">
+              </td>
+              <td>
+                <textarea class="form-control form-control-sm sequence-input fasta-seq-text" data-index="\${index}">\${item.sequence}</textarea>
+              </td>
+            \`;
+            tbody.appendChild(row);
+          });
+          document.getElementById('fastaPreview').style.display = '';
+          generateBtn.disabled = false;
+        } catch (err) {
+          console.error(err);
+          alert('Failed to read FASTA file: ' + err.message);
+        }
+      });
+
+      generateBtn.addEventListener('click', () => {
+        const complexId = (document.getElementById('fastaComplexId').value || 'protein_complex').trim();
+        const seedCount = clampNumber(Number(document.getElementById('fastaSeeds').value) || 100, 1, 999);
+        const ids = Array.from(document.querySelectorAll('.fasta-seq-id')).map(input => (input.value || '').trim());
+        const sequences = Array.from(document.querySelectorAll('.fasta-seq-text')).map(textarea => (textarea.value || '').trim());
+        const errors = [];
+
+        if (!ids.length) {
+          errors.push('No sequences parsed.');
+        }
+        const unique = new Set();
+        ids.forEach((id, idx) => {
+          if (!id) {
+            errors.push(\`Sequence \${idx + 1} missing ID\`);
+          } else if (unique.has(id)) {
+            errors.push(\`Duplicate ID: \${id}\`);
+          }
+          unique.add(id);
+        });
+        sequences.forEach((seq, idx) => {
+          if (!seq) errors.push(\`Sequence \${idx + 1} is empty\`);
+          else if (!validateAminoAcids(seq)) errors.push(\`Sequence \${idx + 1} contains invalid characters\`);
+        });
+
+        if (errors.length) {
+          alert('Validation failed:\\n' + errors.join('\\n'));
+          return;
+        }
+
+        const payload = createAf3JsonPayload(complexId, ids, sequences, seedCount);
+        const jsonText = JSON.stringify(payload, null, 2);
+        document.getElementById('fastaJsonOutput').value = jsonText;
+        downloadBtn.disabled = false;
+        downloadBtn.onclick = () => {
+          downloadText(jsonText, \`\${complexId || 'af3_input'}.json\`);
+        };
+      });
+    }
+
+    function initBatchGenerator() {
+      const fileInput = document.getElementById('batchFastaFiles');
+      const generateBtn = document.getElementById('generateBatchJson');
+      const statusEl = document.getElementById('batchStatus');
+      let files = [];
+
+      fileInput.addEventListener('change', (e) => {
+        files = Array.from(e.target.files || []);
+        statusEl.textContent = files.length ? \`\${files.length} file(s) selected\` : '';
+        generateBtn.disabled = !files.length;
+      });
+
+      generateBtn.addEventListener('click', async () => {
+        if (!files.length) return;
+        const seedCount = clampNumber(Number(document.getElementById('batchSeeds').value) || 100, 1, 999);
+        const prefix = (document.getElementById('batchPrefix').value || '').trim();
+
+        statusEl.textContent = 'Processing...';
+        generateBtn.disabled = true;
+
+        try {
+          const zip = new JSZip();
+          const errors = [];
+
+          for (const file of files) {
+            const base = prefix + file.name.replace(/\.[^/.]+$/, '');
+            const text = await file.text();
+            const sequences = parseFasta(text);
+            if (!sequences.length) {
+              errors.push(\`\${file.name}: no sequences found\`);
+              continue;
+            }
+            const ids = sequences.map((seq, idx) => seq.id || \`chain_\${String.fromCharCode(65 + idx)}\`);
+            const seqStrings = sequences.map(seq => seq.sequence);
+            const invalid = seqStrings.map((seq, idx) => validateAminoAcids(seq) ? null : ids[idx]).filter(Boolean);
+            if (invalid.length) {
+              errors.push(\`\${file.name}: invalid amino acids in \${invalid.join(', ')}\`);
+              continue;
+            }
+            const payload = createAf3JsonPayload(base || 'protein_complex', ids, seqStrings, seedCount);
+            zip.file(\`\${base || 'af3_input'}.json\`, JSON.stringify(payload, null, 2));
+          }
+
+          if (!Object.keys(zip.files).length) {
+            statusEl.textContent = errors.length ? errors.join('; ') : 'Nothing to export.';
+            return;
+          }
+
+          const blob = await zip.generateAsync({ type: 'blob' });
+          downloadBlob(blob, 'af3_json_batch.zip');
+          statusEl.textContent = errors.length ? \`Completed with warnings: \${errors.join('; ')}\` : 'Batch JSON ZIP ready.';
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = 'Failed: ' + err.message;
+        } finally {
+          generateBtn.disabled = false;
+        }
+      });
+    }
+
+    function initValidator() {
+      const fileInput = document.getElementById('validateJsonFile');
+      const button = document.getElementById('validateJsonButton');
+      const result = document.getElementById('validateResult');
+      let file = null;
+
+      fileInput.addEventListener('change', (e) => {
+        file = e.target.files && e.target.files[0];
+        button.disabled = !file;
+        result.innerHTML = '';
+      });
+
+      button.addEventListener('click', async () => {
+        if (!file) return;
+        try {
+          const text = await file.text();
+          const data = JSON.parse(text);
+          const { valid, messages } = validateAf3Json(data);
+          if (valid) {
+            result.innerHTML = '<div class="alert alert-success mb-0"><i class="fas fa-check-circle me-2"></i>JSON validation passed.</div>';
+          } else {
+            result.innerHTML = '<div class="alert alert-danger"><strong>Validation failed:</strong><ul>' +
+              messages.map(msg => '<li>' + escapeHtml(msg) + '</li>').join('') +
+              '</ul></div>';
+          }
+        } catch (err) {
+          result.innerHTML = '<div class="alert alert-danger mb-0">Failed to parse JSON: ' + escapeHtml(err.message) + '</div>';
+        }
+      });
+    }
+
+    function initAnalysis() {
+      const zipInput = document.getElementById('resultsZip');
+      const analyzeBtn = document.getElementById('analyzeZipButton');
+      const statusEl = document.getElementById('analysisStatus');
+      const resultsSection = document.getElementById('analysisResults');
+      const downloadBtn = document.getElementById('downloadAnalysisCsv');
+      const tableHead = document.getElementById('analysisTableHead');
+      const tableBody = document.getElementById('analysisTableBody');
+      const errorContainer = document.getElementById('analysisErrors');
+      const errorList = document.getElementById('analysisErrorList');
+      let zipFile = null;
+      let latestResult = null;
+
+      zipInput.addEventListener('change', (e) => {
+        zipFile = e.target.files && e.target.files[0];
+        analyzeBtn.disabled = !zipFile;
+        resultsSection.style.display = 'none';
+        statusEl.textContent = '';
+      });
+
+      analyzeBtn.addEventListener('click', async () => {
+        if (!zipFile) return;
+        statusEl.textContent = 'Loading ZIP...';
+        analyzeBtn.disabled = true;
+        resultsSection.style.display = 'none';
+        errorContainer.style.display = 'none';
+        tableHead.innerHTML = '';
+        tableBody.innerHTML = '';
+        errorList.innerHTML = '';
+        latestResult = null;
+
+        try {
+          const fields = (document.getElementById('confidenceFields').value || 'ptm,iptm,ranking_score')
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
+
+          const zip = await JSZip.loadAsync(zipFile);
+          const sampleMap = collectSamplesFromZip(zip);
+          if (!sampleMap.size) {
+            statusEl.textContent = 'No prediction folders detected in ZIP.';
+            analyzeBtn.disabled = false;
+            return;
+          }
+
+          statusEl.textContent = \`Analyzing \${sampleMap.size} sample(s)...\`;
+
+          const results = [];
+          const warnings = [];
+
+          for (const [sample, files] of sampleMap.entries()) {
+            const sampleResult = await analyzeSample(zip, sample, files, fields);
+            if (sampleResult.warning) warnings.push(sampleResult.warning);
+            if (sampleResult.row) results.push(sampleResult.row);
+          }
+
+          if (!results.length) {
+            statusEl.textContent = 'No valid samples produced results.';
+            if (warnings.length) {
+              errorList.innerHTML = warnings.map(w => '<li>' + escapeHtml(w) + '</li>').join('');
+              errorContainer.style.display = '';
+            }
+            analyzeBtn.disabled = false;
+            return;
+          }
+
+          latestResult = { fields, rows: results };
+
+          renderAnalysisTable(fields, results, tableHead, tableBody);
+          if (warnings.length) {
+            errorList.innerHTML = warnings.map(w => '<li>' + escapeHtml(w) + '</li>').join('');
+            errorContainer.style.display = '';
+          } else {
+            errorContainer.style.display = 'none';
+          }
+          resultsSection.style.display = '';
+          statusEl.textContent = 'Analysis complete.';
+          downloadBtn.onclick = () => {
+            if (!latestResult) return;
+            const csv = buildAnalysisCsv(latestResult.fields, latestResult.rows);
+            downloadText(csv, 'af3_analysis_results.csv');
+          };
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = 'Failed to analyze ZIP: ' + err.message;
+        } finally {
+          analyzeBtn.disabled = false;
+        }
+      });
+    }
+
+    function initPageViews() {
+      if (!GA_STATS_API || GA_STATS_API.includes('YOUR_SCRIPT_ID')) {
+        return;
+      }
+      const callbackName = 'gaStatsCallback_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      let scriptEl = null;
+      let timeoutId = null;
+      let finished = false;
+
+      const cleanup = () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = null;
+        if (window[callbackName]) delete window[callbackName];
+        if (scriptEl && scriptEl.parentNode) scriptEl.parentNode.removeChild(scriptEl);
+      };
+
+      window[callbackName] = function(data) {
+        if (finished) return;
+        finished = true;
+        try {
+          if (data && typeof data.views === 'number') {
+            document.getElementById('pageViews').textContent = data.views.toLocaleString();
+          }
+        } finally {
+          cleanup();
+        }
+      };
+
+      timeoutId = setTimeout(() => {
+        if (!finished) {
+          finished = true;
+          cleanup();
+        }
+      }, 10000);
+
+      scriptEl = document.createElement('script');
+      scriptEl.src = \`\${GA_STATS_API}?tool=af3_helper&callback=\${callbackName}\`;
+      scriptEl.async = true;
+      scriptEl.charset = 'utf-8';
+      scriptEl.onerror = () => {
+        cleanup();
+      };
+      document.head.appendChild(scriptEl);
+    }
+
+    function clampNumber(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function generateRandomSeeds(count) {
+      const seeds = [];
+      for (let i = 0; i < count; i++) {
+        seeds.push(Math.floor(Math.random() * 99999) + 1);
+      }
+      return seeds;
+    }
+
+    function createAf3JsonPayload(complexId, ids, sequences, seedCount) {
+      const formattedSequences = ids.map((id, idx) => ({
+        protein: {
+          id: id || \`chain_\${String.fromCharCode(65 + idx)}\`,
+          sequence: sequences[idx]
+        }
+      }));
+      return {
+        name: complexId || 'protein_complex',
+        modelSeeds: generateRandomSeeds(seedCount),
+        sequences: formattedSequences,
+        dialect: 'alphafold3',
+        version: 1
+      };
+    }
+
+    function validateAminoAcids(seq) {
+      return /^[ACDEFGHIKLMNPQRSTVWY]+$/i.test(seq);
+    }
+
+    function parseFasta(text) {
+      const lines = text.split(/\r?\n/);
+      const sequences = [];
+      let currentId = null;
+      let currentSeq = [];
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+        if (line.startsWith('>')) {
+          if (currentId !== null) {
+            sequences.push({ id: currentId, sequence: currentSeq.join('').toUpperCase() });
+          }
+          currentId = line.substring(1).split(/\s+/)[0] || 'chain_' + String.fromCharCode(65 + sequences.length);
+          currentSeq = [];
+        } else {
+          currentSeq.push(line.replace(/\s+/g, '').toUpperCase());
+        }
+      }
+      if (currentId !== null) {
+        sequences.push({ id: currentId, sequence: currentSeq.join('').toUpperCase() });
+      }
+      return sequences;
+    }
+
+    function validateAf3Json(data) {
+      const messages = [];
+      if (typeof data !== 'object' || data === null) {
+        return { valid: false, messages: ['Root must be an object.'] };
+      }
+      ['sequences', 'dialect', 'version'].forEach(field => {
+        if (!(field in data)) messages.push('Missing required field: ' + field);
+      });
+      if (data.dialect && data.dialect !== 'alphafold3') {
+        messages.push('dialect must be alphafold3');
+      }
+      if (!Array.isArray(data.sequences) || !data.sequences.length) {
+        messages.push('sequences must be a non-empty array');
+      } else {
+        data.sequences.forEach((item, idx) => {
+          if (!item || typeof item !== 'object' || !item.protein) {
+            messages.push(\`Sequence #\${idx + 1} missing protein object\`);
+            return;
+          }
+          const protein = item.protein;
+          if (!protein.sequence) {
+            messages.push(\`Sequence #\${idx + 1} missing sequence string\`);
+          } else if (!validateAminoAcids(protein.sequence)) {
+            messages.push(\`Sequence #\${idx + 1} contains invalid amino acids\`);
+          }
+        });
+      }
+      return { valid: messages.length === 0, messages };
+    }
+
+    function collectSamplesFromZip(zip) {
+      const map = new Map();
+      Object.keys(zip.files).forEach(path => {
+        const entry = zip.files[path];
+        if (entry.dir) return;
+        const normalized = path.replace(/\\\\/g, '/');
+        const segments = normalized.split('/').filter(Boolean);
+        if (segments.length < 2) return;
+        // Parent folder name is considered the sample ID
+        const sample = segments[segments.length - 2];
+        if (!map.has(sample)) map.set(sample, []);
+        map.get(sample).push(normalized);
+      });
+      return map;
+    }
+
+    async function analyzeSample(zip, sample, files, fields) {
+      const structureCandidates = files.filter(f => /\.(cif|pdb)$/i.test(f));
+      const jsonCandidates = files.filter(f => f.endsWith('summary_confidences.json') || f.endsWith('_summary_confidences.json'));
+
+      if (!structureCandidates.length && !jsonCandidates.length) {
+        return { warning: \`\${sample}: no structure file or confidence JSON found\` };
+      }
+
+      let selectedStructure = null;
+      const cifFiles = structureCandidates.filter(f => f.toLowerCase().endsWith('.cif'));
+      const pdbFiles = structureCandidates.filter(f => f.toLowerCase().endsWith('.pdb'));
+
+      const pickBest = (arr) => {
+        const modelPrimary = arr.filter(f => /model/i.test(f));
+        if (modelPrimary.length) {
+          return modelPrimary.sort()[0];
+        }
+        return arr.sort()[0];
+      };
+
+      if (cifFiles.length) selectedStructure = pickBest(cifFiles);
+      else if (pdbFiles.length) selectedStructure = pickBest(pdbFiles);
+
+      let avgPlddt = null;
+      let structureWarning = null;
+      if (selectedStructure) {
+        try {
+          const text = await zip.file(selectedStructure).async('text');
+          if (selectedStructure.toLowerCase().endsWith('.cif')) {
+            avgPlddt = calculateAveragePlddtFromCif(text);
+          } else {
+            avgPlddt = calculateAveragePlddtFromPdb(text);
+          }
+          if (avgPlddt == null) {
+            structureWarning = \`\${sample}: failed to compute pLDDT from \${selectedStructure}\`;
+          }
+        } catch (err) {
+          structureWarning = \`\${sample}: error reading \${selectedStructure} (\${err.message})\`;
+        }
+      } else {
+        structureWarning = \`\${sample}: no CIF/PDB structure found\`;
+      }
+
+      let confidenceValues = {};
+      let confidenceWarning = null;
+      if (jsonCandidates.length) {
+        try {
+          let chosenJson = jsonCandidates.find(f => f.endsWith('summary_confidences.json')) || jsonCandidates[0];
+          const jsonText = await zip.file(chosenJson).async('text');
+          const data = JSON.parse(jsonText);
+          fields.forEach(field => {
+            confidenceValues[field] = data[field] !== undefined ? data[field] : null;
+          });
+        } catch (err) {
+          confidenceWarning = \`\${sample}: failed to parse summary_confidences.json (\${err.message})\`;
+        }
+      } else {
+        confidenceWarning = \`\${sample}: summary_confidences.json not found\`;
+      }
+
+      const warnings = [];
+      if (structureWarning) warnings.push(structureWarning);
+      if (confidenceWarning) warnings.push(confidenceWarning);
+
+      const quality = classifyQuality(avgPlddt, confidenceValues['ptm']);
+
+      const row = {
+        sample,
+        avgPlddt: avgPlddt != null ? Number(avgPlddt.toFixed(2)) : null,
+        quality,
+        confidence: confidenceValues
+      };
+
+      return {
+        row,
+        warning: warnings.length ? warnings.join('; ') : null
+      };
+    }
+
+    function calculateAveragePlddtFromPdb(text) {
+      const lines = text.split(/\r?\n/);
+      const scores = [];
+      for (const line of lines) {
+        if (line.startsWith('ATOM') || line.startsWith('HETATM')) {
+          const atomName = line.substring(12, 16).trim();
+          if (atomName === 'CA') {
+            const bFactorStr = line.substring(60, 66).trim();
+            const value = parseFloat(bFactorStr);
+            if (!Number.isNaN(value)) scores.push(value);
+          }
+        }
+      }
+      if (!scores.length) return null;
+      const sum = scores.reduce((acc, v) => acc + v, 0);
+      return sum / scores.length;
+    }
+
+    function calculateAveragePlddtFromCif(text) {
+      const lines = text.split(/\r?\n/);
+      let inAtomLoop = false;
+      const headers = [];
+      const headerIndex = {};
+      const scores = [];
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+
+        if (line.startsWith('loop_')) {
+          inAtomLoop = false;
+          headers.length = 0;
+          Object.keys(headerIndex).forEach(key => delete headerIndex[key]);
+          continue;
+        }
+
+        if (line.startsWith('_atom_site.')) {
+          inAtomLoop = true;
+          const name = line.replace('_atom_site.', '').trim();
+          headerIndex[name] = headers.length;
+          headers.push(name);
+          continue;
+        }
+
+        if (inAtomLoop) {
+          if (line.startsWith('#')) {
+            inAtomLoop = false;
+            continue;
+          }
+          const parts = line.split(/\s+/);
+          const atomIdx = headerIndex['label_atom_id'] != null ? headerIndex['label_atom_id'] : headerIndex['auth_atom_id'];
+          const bIdx = headerIndex['B_iso_or_equiv'] != null ? headerIndex['B_iso_or_equiv'] : headerIndex['pLDDT'];
+          if (atomIdx == null || bIdx == null) continue;
+          if (parts.length <= Math.max(atomIdx, bIdx)) continue;
+          const atomName = parts[atomIdx];
+          if (atomName !== 'CA') continue;
+          const value = parseFloat(parts[bIdx]);
+          if (!Number.isNaN(value)) scores.push(value);
+        }
+      }
+
+      if (!scores.length) return null;
+      const sum = scores.reduce((acc, v) => acc + v, 0);
+      return sum / scores.length;
+    }
+
+    function classifyQuality(plddt, ptm) {
+      if (plddt != null && ptm != null) {
+        if (plddt > 70 && ptm > 0.7) return 'High';
+        if ((plddt > 70 && ptm > 0.5) || (plddt > 50 && ptm > 0.7)) return 'Medium';
+        return 'Low';
+      }
+      return 'Unknown';
+    }
+
+    function renderAnalysisTable(fields, rows, headEl, bodyEl) {
+      const headers = ['Sample', 'Average pLDDT', ...fields.map(f => f.toUpperCase()), 'Quality'];
+      const headRow = document.createElement('tr');
+      headers.forEach(label => {
+        const th = document.createElement('th');
+        th.textContent = label;
+        headRow.appendChild(th);
+      });
+      headEl.appendChild(headRow);
+
+      const fieldKeys = fields;
+      rows.sort((a, b) => a.sample.localeCompare(b.sample));
+      rows.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${escapeHtml(row.sample)}</strong></td>
+          <td>${row.avgPlddt != null ? row.avgPlddt.toFixed(2) : 'N/A'}</td>
+        `;
+        fieldKeys.forEach(field => {
+          const value = row.confidence[field];
+          const td = document.createElement('td');
+          td.textContent = value != null ? Number(value).toFixed(4) : 'N/A';
+          tr.appendChild(td);
+        });
+        const qualityBadge = renderQualityBadge(row.quality);
+        const tdQuality = document.createElement('td');
+        tdQuality.innerHTML = qualityBadge;
+        tr.appendChild(tdQuality);
+        bodyEl.appendChild(tr);
+      });
+    }
+
+    function renderQualityBadge(quality) {
+      const map = {
+        High: 'success',
+        Medium: 'warning',
+        Low: 'danger',
+        Unknown: 'secondary'
+      };
+      const cls = map[quality] || 'secondary';
+      return `<span class="badge bg-${cls}">${escapeHtml(quality)}</span>`;
+    }
+
+    function buildAnalysisCsv(fields, rows) {
+      const header = ['Sample', 'Average_pLDDT', ...fields.map(f => f.toUpperCase()), 'Quality'];
+      const lines = [header.join(',')];
+      rows.forEach(row => {
+        const arr = [
+          row.sample,
+          row.avgPlddt != null ? row.avgPlddt.toFixed(2) : ''
+        ];
+        fields.forEach(field => {
+          const value = row.confidence[field];
+          arr.push(value != null ? Number(value).toFixed(4) : '');
+        });
+        arr.push(row.quality);
+        lines.push(arr.join(','));
+      });
+      return lines.join('\\n');
+    }
+
+    function downloadText(text, filename) {
+      const blob = new Blob([text], { type: 'application/json;charset=utf-8;' });
+      downloadBlob(blob, filename);
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+  </script>
+</body>
+</html>
+
