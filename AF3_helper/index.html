@@ -413,6 +413,12 @@
       const downloadBtn = document.getElementById('downloadManualJson');
       const container = document.getElementById('manualSequenceList');
 
+      // Validate all required elements exist
+      if (!countInput || !addBtn || !removeBtn || !generateBtn || !downloadBtn || !container) {
+        console.error('Required elements not found for manual sequences');
+        return;
+      }
+
       function createChainInput(index) {
         const chainId = String.fromCharCode(65 + index);
         const wrapper = document.createElement('div');
@@ -459,6 +465,10 @@
       }
 
       function addChain() {
+        if (!container) {
+          console.error('Container not found');
+          return;
+        }
         const currentChains = container.querySelectorAll('[data-chain-index]').length;
         if (currentChains >= 10) {
           alert('Maximum 10 chains allowed.');
@@ -467,6 +477,8 @@
         const newChain = createChainInput(currentChains);
         container.appendChild(newChain);
         updateChainIndices();
+        // Scroll to the newly added chain
+        newChain.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
 
       function removeChain() {
@@ -480,10 +492,45 @@
         updateChainIndices();
       }
 
-      // Initialize with one chain
-      if (container.children.length === 0) {
-        container.appendChild(createChainInput(0));
-        updateChainIndices();
+      // Initialize with one chain - always ensure at least one chain exists
+      function ensureInitialChain() {
+        const existingChains = container.querySelectorAll('[data-chain-index]');
+        if (existingChains.length === 0) {
+          // Clear container to ensure clean state
+          container.innerHTML = '';
+          container.appendChild(createChainInput(0));
+          updateChainIndices();
+        } else {
+          // If chains exist, just update indices to sync with countInput
+          updateChainIndices();
+        }
+      }
+      
+      // Initialize immediately
+      ensureInitialChain();
+      
+      // Also ensure chain exists when tab becomes visible (in case of tab switching)
+      const manualTab = document.getElementById('manualTab');
+      if (manualTab) {
+        // Use MutationObserver to detect when tab becomes visible
+        const observer = new MutationObserver(() => {
+          if (manualTab.style.display !== 'none') {
+            ensureInitialChain();
+          }
+        });
+        observer.observe(manualTab, { attributes: true, attributeFilter: ['style'] });
+        
+        // Also check on tab button clicks
+        const tabButtons = document.querySelectorAll('.tab-buttons .btn');
+        tabButtons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const target = btn.getAttribute('data-tab');
+            if (target === 'manualTab') {
+              // Small delay to ensure tab is visible
+              setTimeout(ensureInitialChain, 50);
+            }
+          });
+        });
       }
 
       // Sync countInput with actual chains when changed manually
