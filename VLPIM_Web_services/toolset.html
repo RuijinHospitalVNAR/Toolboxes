@@ -22,7 +22,7 @@
             <h2 class="m-0"><i class="fas fa-tools"></i> VLPIM Tool setup</h2>
             <div>
                 <a href="https://ruijinhospitalvnar.github.io/Toolboxes/VLPIM_Web_services/#home" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left"></i> Back to Home</a>
-                <a href="https://github.com/RuijinHospitalVNAR/Toolboxes" target="_blank" class="btn btn-sm btn-dark"><i class="fab fa-github"></i> GitHub</a>
+                <a href="https://github.com/RuijinHospitalVNAR/Toolboxes" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-dark"><i class="fab fa-github"></i> GitHub</a>
             </div>
         </div>
 
@@ -31,6 +31,7 @@
                 <h5 class="m-0"><i class="fas fa-dna"></i> ProteinMPNN</h5>
             </div>
             <div class="section-body">
+                <ul>
                     <li><strong>pdb_path</strong>: path to reference structure PDB.</li>
                     <li><strong>epitope_df</strong>: DataFrame with columns <code>sequence,start,end,score,method</code>.</li>
                     <li><strong>samples_per_temp</strong>: sequences per temperature (default 20).</li>
@@ -44,6 +45,7 @@
                 <h5 class="m-0"><i class="fas fa-vial"></i> NetMHCIIpan</h5>
             </div>
             <div class="section-body">
+                <ul>
                     <li><strong>fasta_path</strong>: FASTA file path.</li>
                     <li><strong>HLA_alleles</strong>: e.g., <code>DRB1*01:01</code>, <code>DRB1*03:01</code>, <code>DRB1*04:01</code>, <code>DRB1*07:01</code>, <code>DRB1*08:01</code>, <code>DRB1*11:01</code>, <code>DRB1*13:01</code>, <code>DRB1*15:01</code></li>
                     <li><strong>Fixed flags</strong>: <code>-length 15</code>, <code>-BA</code>, <code>-rank</code>, version 4.3.</li>
@@ -56,6 +58,7 @@
                 <h5 class="m-0"><i class="fas fa-cubes"></i> AlphaFold3</h5>
             </div>
             <div class="section-body">
+                <ul>
                     <li><strong>seeds</strong>: user-provided or automatically generated seeds.</li>
                     <li><strong>max_candidates</strong>: limit number of sequences (default 10).</li>
                 </ul>
@@ -67,6 +70,7 @@
                 <h5 class="m-0"><i class="fas fa-atom"></i> Rosetta Interface Analyzer</h5>
             </div>
             <div class="section-body">
+                <ul>
                     <li><strong>analyze_interface(pdb_path, output_dir)</strong>: returns <code>dG/dSASA</code>, <code>packstat</code>, <code>delta_unsat_hbonds</code>.</li>
                 </ul>
             </div>

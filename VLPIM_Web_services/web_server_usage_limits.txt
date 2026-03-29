@@ -1,0 +1,8 @@
+Web-Server Usage Limits
+
+The VLPIM web server operates with several practical constraints to ensure optimal performance and user experience. For sequence inputs, VLP sequences are recommended to be up to 10,000 amino acids in length, as very long sequences may experience slower processing times. NetMHCIIpan output files should follow the standard format, with large files exceeding 10 MB potentially requiring extended processing time. PDB structure files are optimized for structures containing up to 5,000 residues per chain for best performance. The server provides configurable parameters with defined ranges: epitope number selection ranges from 1 to 50 (default: 10), epitope target length spans 9-15 amino acids (default: 15 aa), RMSD cutoff values range from 0.5 to 500 A (suggested: 2-300 A), and RMSD maximum iteration cycles can be set from 1 to 20 (default: 5 cycles). In terms of runtime performance, epitope identification typically completes within 5-30 seconds depending on sequence length and the number of epitopes requested, while RMSD calculations usually finish within 10-60 seconds for typical protein structures, with iterative alignment potentially taking longer when higher cycle counts are used. External API requests have a timeout limit of 10 seconds. For optimal performance, users are advised to use sequences and structures of moderate size (less than 5,000 residues), and large batch analyses may require multiple sessions or splitting of input data.
+
+Privacy and analytics note:
+- Sequence and structure analysis is executed client-side in the browser.
+- Anonymous traffic analytics is optional and disabled by default.
+- If the user enables analytics, page-view metrics may be sent to Google Analytics.

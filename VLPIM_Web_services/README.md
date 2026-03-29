@@ -41,26 +41,29 @@ Simply open `index.html` in your web browser or visit the [live version](https:/
 
 The following example files are included:
 - `DP_P03146_NetMHCIIpan.xls`: Example NetMHCIIpan output
+- `seq-a .csv`: Example immunogenicity input table
 - `6htx.pdb`: Example structure file
 
 ## Usage
 
-1. **Epitope Identification**:
-   - Upload NetMHCIIpan output file
-   - Enter VLP sequence
-   - Select Top N epitopes and Target length
-   - Choose Enhance or Reduce mode
-   - Click "epitopes identification"
+1. **Step 1: Epitope identify**
+   - Upload NetMHCIIpan output (`.txt/.xls/.xlsx`) and enter VLP sequence
+   - Set Top N epitopes, target length (9-15 aa), and analysis mode (Enhance/Reduce)
+   - Optional: click **Load example**
+   - Click **Epitopes identification**
+   - Optional: click **Export extended epitopes** to download `selected_epitopes.csv`
 
-2. **Immunogenicity Analysis**:
-   - Upload NetMHCIIpan output file
-   - Select mode (Enhance/Reduce)
-   - Click "Compute S<sup>im</sup> scores"
+2. **Step 4.1: Immunogenicity analysis**
+   - Upload NetMHCIIpan output (`.txt/.csv/.xls/.xlsx`) and select mode (Enhance/Reduce)
+   - Optional: click **Load example** (uses `seq-a .csv`)
+   - Click **Compute S<sup>im</sup> scores**
+   - Review peptide score table and click **Export CSV** (combined output, e.g. `sim_im_reduce_combined.csv`)
 
-3. **Structural Superposition**:
-   - Upload reference and predicted structures
-   - Select alignment method (Kabsch/Iterative/TM-align)
-   - Click "Calculate RMSD"
+3. **Step 4.2: Structural superposition**
+   - Upload reference and predicted structures (`.pdb/.cif`)
+   - Select method: Kabsch / Iterative / TM-align
+   - Optional: click **Load example 1** or **Load example 2**
+   - Click **Calculate RMSD** and review RMSD result card (TM-score is shown for TM-align)
 
 ## Browser Compatibility
 
@@ -72,7 +75,9 @@ The following example files are included:
 ## Notes
 
 - All calculations are performed client-side (in your browser)
-- No data is sent to external servers
+- Sequence/structure analysis data is processed locally in the browser
+- Anonymous traffic analytics is optional (disabled by default; can be enabled by user)
+- If analytics is enabled, page-view metrics may be sent to Google Analytics
 - Large files may take longer to process
 
 ## Citation
